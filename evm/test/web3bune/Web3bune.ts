@@ -86,174 +86,45 @@ describe("Propcorn", function () {
     });
   });
 
-  /*
-  describe("fundProposal", function () {
+  describe("getPost", function () {
     beforeEach(async () => {
       ({ web3bune } = await loadFixture(deployWeb3buneFixture));
-      await web3bune
-        .connect(bob)
-        .createProposal(
-          url,
-          secondsToUnlock,
-          minAmountRequested,
-          feeBasisPoints,
-        );
+      await web3bune.connect(bob).createPost(tokenURI, price, feeBasisPoints);
     });
 
-    it("should fail if the proposal doesn't exist", async () => {
-      await expect(
-        web3bune.connect(carol).fundProposal(bob.address, 9999),
-      ).revertedWithCustomError(web3bune, "NonexistentProposal");
-    });
-
-    it("should fail if the proposal is closed", async () => {
-      // Fund the full proposal
-      await web3bune
-        .connect(carol)
-        .fundProposal(bob.address, index, { value: minAmountRequested });
-
-      // Let time passes
-      await time.increase(secondsToUnlock);
-
-      // Withdraw the full amount
-      await web3bune
-        .connect(bob)
-        .withdrawFunds(bob.address, index, dan.address);
-
-      await expect(
-        web3bune.connect(carol).fundProposal(bob.address, 0),
-      ).revertedWithCustomError(web3bune, "ProposalClosed");
-    });
-
-    it("should emit an event on funding", async () => {
-      await expect(
-        web3bune
-          .connect(carol)
-          .fundProposal(bob.address, index, { value: parseEther("0.4") }),
-      )
-        .to.emit(web3bune, "ProposalFunded")
-        .withArgs(carol.address, bob.address, index, parseEther("0.4"), 0);
-    });
-
-    it("should emit an event with `fundingCompletedAt` set on funding when reaches the threshold", async () => {
-      const nextTimestamp = 2000000000;
-      await time.setNextBlockTimestamp(nextTimestamp);
-      await expect(
-        web3bune
-          .connect(carol)
-          .fundProposal(bob.address, 0, { value: parseEther("1") }),
-      )
-        .to.emit(web3bune, "ProposalFunded")
-        .withArgs(
-          carol.address,
-          bob.address,
-          0,
-          parseEther("1"),
-          nextTimestamp,
-        );
-    });
-  });
-
-  describe("withdrawFunds", function () {
-    const url = "https://github.com/deeecent/propcorn/issues/1";
-    const secondsToUnlock = 666;
-    const minAmountRequested = parseEther("1");
-    // 2%
-    const feeBasisPoints = 2 * 100;
-    const index = 0;
-
-    beforeEach(async () => {
-      ({ web3bune } = await loadFixture(deployWeb3buneFixture));
-      await web3bune
-        .connect(bob)
-        .createProposal(
-          url,
-          secondsToUnlock,
-          minAmountRequested,
-          feeBasisPoints,
-        );
-    });
-
-    it("should fail if the proposal doesn't exist", async () => {
-      await expect(
-        web3bune.connect(bob).withdrawFunds(bob.address, 9999, bob.address),
-      ).revertedWithCustomError(web3bune, "NonexistentProposal");
-    });
-
-    it("should fail if the sender is not the owner of the proposal", async () => {
-      await expect(
-        web3bune.connect(carol).withdrawFunds(bob.address, index, bob.address),
-      ).revertedWithCustomError(web3bune, "InvalidOwner");
-    });
-
-    it("should fail if the proposal is not funded yet", async () => {
-      await expect(
-        web3bune.connect(bob).withdrawFunds(bob.address, index, bob.address),
-      ).revertedWithCustomError(web3bune, "ProposalInProgress");
-    });
-
-    it("should fail if the proposal reaches the amount threshold but not the temporal one", async () => {
-      await web3bune
-        .connect(carol)
-        .fundProposal(bob.address, index, { value: minAmountRequested });
-      await expect(
-        web3bune.connect(bob).withdrawFunds(bob.address, index, bob.address),
-      ).revertedWithCustomError(web3bune, "ProposalInProgress");
-    });
-
-    it("should fail if the funds has already been withdrawn", async () => {
-      await web3bune
-        .connect(carol)
-        .fundProposal(bob.address, index, { value: minAmountRequested });
-
-      await time.increase(secondsToUnlock);
-
-      await web3bune
-        .connect(bob)
-        .withdrawFunds(bob.address, index, dan.address);
-
-      await expect(
-        web3bune.connect(bob).withdrawFunds(bob.address, index, dan.address),
-      ).revertedWithCustomError(web3bune, "ProposalClosed");
-    });
-
-    it("should transfer funds if the proposal reaches the min amount and enough time has passed", async () => {
-      await web3bune
-        .connect(carol)
-        .fundProposal(bob.address, index, { value: minAmountRequested });
-      await time.increase(secondsToUnlock);
-
-      await expect(
-        web3bune.connect(bob).withdrawFunds(bob.address, index, dan.address),
-      ).to.changeEtherBalances(
-        [await web3bune.getAddress(), dan.address, alice.address],
-        [
-          -minAmountRequested,
-          minAmountRequested -
-            (minAmountRequested * BigInt(feeBasisPoints)) / 10000n,
-          (minAmountRequested * BigInt(feeBasisPoints)) / 10000n,
-        ],
+    it("should fail if the post doesn't exist", async () => {
+      await expect(web3bune.getPost(1)).revertedWithCustomError(
+        web3bune,
+        "NonexistentPost",
       );
     });
 
-    it("should emit an event if the proposal reaches the min amount and enough time has passed", async () => {
-      await web3bune
-        .connect(carol)
-        .fundProposal(bob.address, index, { value: minAmountRequested });
-      await time.increase(secondsToUnlock);
-
-      await expect(
-        web3bune.connect(bob).withdrawFunds(bob.address, index, dan.address),
-      )
-        .to.emit(web3bune, "FundsWithdrawn")
-        .withArgs(
-          bob.address,
-          index,
-          minAmountRequested -
-            (minAmountRequested * BigInt(feeBasisPoints)) / 10000n,
-          dan.address,
-        );
+    it("should return the post data on valid id", async () => {
+      const p = await web3bune.getPost(0);
+      expect(p.tokenURI).equal(tokenURI);
+      expect(p.price).equal(price);
+      expect(p.feeBasisPoints).equal(feeBasisPoints);
     });
   });
-  */
+
+  describe("listPostsByAccount", function () {
+    beforeEach(async () => {
+      ({ web3bune } = await loadFixture(deployWeb3buneFixture));
+      for (let i = 0; i < 150; i++) {
+        await web3bune.connect(bob).createPost(tokenURI, price, feeBasisPoints);
+      }
+    });
+
+    it("should return an empty array if account has no posts", async () => {
+      const posts = await web3bune.listPostsByAccount(alice.address, 0);
+      expect(posts.filter((p) => p[0].length).length).equal(0);
+    });
+
+    it("should return pages", async () => {
+      const posts0 = await web3bune.listPostsByAccount(bob.address, 0);
+      expect(posts0.filter((p) => p[0].length).length).equal(100);
+      const posts1 = await web3bune.listPostsByAccount(bob.address, 1);
+      expect(posts1.filter((p) => p[0].length).length).equal(50);
+    });
+  });
 });

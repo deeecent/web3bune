@@ -91,6 +91,12 @@ contract Web3bune is ERC1155, Ownable {
         return post.tokenURI;
     }
 
+    function getPost(
+        uint256 id
+    ) public view virtual postExists(id) returns (Post memory) {
+        return _posts[id];
+    }
+
     function listPostsByAccount(
         address account,
         uint256 page
