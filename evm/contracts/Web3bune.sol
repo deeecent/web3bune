@@ -8,6 +8,7 @@ contract Web3bune is ERC1155, Ownable {
     // Errors
     error NonexistentPost();
     error InvalidFee();
+    error InsufficientFunds();
 
     // Structs and data
     struct Post {
@@ -25,12 +26,14 @@ contract Web3bune is ERC1155, Ownable {
         uint256 feeBasisPoints
     );
 
+    uint256 constant PAGE_SIZE = 100;
+
     Post[] internal _posts;
     mapping(address => uint256[]) internal _addressToPostIds;
     address payable internal _protocolFeeReceiver;
 
     modifier postExists(uint256 index) {
-        if (_posts.length > index) {
+        if (index >= _posts.length) {
             revert NonexistentPost();
         }
         _;
@@ -63,12 +66,8 @@ contract Web3bune is ERC1155, Ownable {
         );
     }
 
-    function mint(
-        address account,
-        uint256 index
-    ) public payable postExists(index) {
-        Post memory post = _posts[index];
-        _mint(account, index, 1, "");
+    function mint(address account, uint256 index) public payable {
+        mintBatch(account, index, 1);
     }
 
     function mintBatch(
@@ -77,14 +76,33 @@ contract Web3bune is ERC1155, Ownable {
         uint256 amount
     ) public payable postExists(index) {
         Post memory post = _posts[index];
+
+        if (msg.value < post.price * amount) {
+            revert InsufficientFunds();
+        }
+
         _mint(account, index, amount, "");
     }
 
-    /*
-    function listPostsByAccount(
-        address account
-    ) public view proposalExists(account, index) returns (Proposal memory) {
-        return _proposals[account][index];
+    function uri(
+        uint256 id
+    ) public view virtual override postExists(id) returns (string memory) {
+        Post memory post = _posts[id];
+        return post.tokenURI;
     }
-    */
+
+    function listPostsByAccount(
+        address account,
+        uint256 page
+    ) public view returns (Post[PAGE_SIZE] memory) {
+        Post[PAGE_SIZE] memory posts;
+        uint256 offset = page * PAGE_SIZE;
+        uint256[] memory postIds = _addressToPostIds[account];
+
+        for (uint256 i = 0; i < PAGE_SIZE && i + offset < postIds.length; i++) {
+            posts[i] = _posts[postIds[i + offset]];
+        }
+
+        return posts;
+    }
 }
