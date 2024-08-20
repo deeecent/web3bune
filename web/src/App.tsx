@@ -21,7 +21,7 @@ function App() {
         <ConnectButton />
       </Flex>
       <Heading as="h1" size="4xl">
-        <Link to="/">Propcorn</Link>
+        <Link to="/">Web 3bune</Link>
       </Heading>
       <Spacer />
       {author !== undefined && index !== undefined && (

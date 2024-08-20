@@ -38,3 +38,39 @@
     local("FiraCode"),
     url(./fonts/Fira_Code/static/FiraCode-Bold.ttf) format("truetype");
 }
+
+@font-face {
+  font-family: "DMMonoRegular";
+  src:
+    local("DMMono-Regular"),
+    url(./fonts/dmmono/DMMono-Regular.ttf) format("truetype");
+}
+
+@font-face {
+  font-family: "DMMonoMedium";
+  src:
+    local("DMMono-Medium"),
+    url(./fonts/dmmono/DMMono-Medium.ttf) format("truetype");
+}
+
+@font-face {
+  font-family: "DMMonoRegular";
+  src:
+    local("DMMono-Regular"),
+    url(./fonts/dmmono/DMMono-Regular.ttf) format("truetype");
+}
+
+@font-face {
+  font-family: "CloisterBlack";
+  src:
+    local("CloisterBlack"),
+    url(./fonts/CloisterBlack.ttf) format("truetype");
+}
+
+@font-face {
+  font-family: "CloisterBlackHeading";
+  font-weight: 700;
+  src:
+    local("CloisterBlack"),
+    url(./fonts/CloisterBlack.ttf) format("truetype");
+}

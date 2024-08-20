@@ -21,39 +21,53 @@ const Button = defineStyleConfig({
     fontWeight: "bold",
     textTransform: "uppercase",
     borderRadius: "0", // <-- border radius is same for all variants and sizes
-    borderColor: "#ffffff",
+    borderColor: "#000000",
     borderWidth: "0.5px",
   },
   variants: {
     primary: () => ({
-      color: "white",
-      backgroundColor: "black",
+      color: "black",
+      backgroundColor: "white",
     }),
     disabled: () => ({
       fontSize: "md",
-      backgroundColor: "black",
+      backgroundColor: "white",
       color: "grey",
       _hover: {
-        color: "white",
-        backgroundColor: "black",
+        color: "black",
+        backgroundColor: "white",
       },
+    }),
+  },
+});
+
+const Text = defineStyleConfig({
+  // The styles all button have in common
+  baseStyle: {
+    fontFamily: `"DMMonoRegular", "Arial", "serif"`,
+    fontSize: "15px",
+  },
+  variants: {
+    bold: () => ({
+      fontFamily: `"DMMonoMedium", "Arial", "serif"`,
+      fontSize: "20px",
     }),
   },
 });
 
 const theme = extendTheme({
   fonts: {
-    heading: `"FiraCodeHeading", "Arial", "serif"`,
-    body: `"FiraCode", "Arial", "serif"`,
+    heading: `"CloisterBlackHeading", "Arial", "serif"`,
+    body: `"DMMonoRegular", "Arial", "serif"`,
   },
   styles: {
     global: {
       html: {
-        background: "rgb(0, 0, 0)",
+        background: "rgb(255, 255, 255)",
       },
       body: {
-        background: "transparent",
-        color: "rgb(255, 255, 255)",
+        background: "white",
+        color: "rgb(0, 0, 0)",
         textAlign: "center",
         height: "100vh",
       },
@@ -61,6 +75,7 @@ const theme = extendTheme({
   },
   components: {
     Button,
+    Text,
   },
 });
 

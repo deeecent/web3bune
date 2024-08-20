@@ -1,7 +1,6 @@
 import {
   Box,
   Button,
-  Heading,
   HStack,
   Input,
   NumberDecrementStepper,
@@ -108,14 +107,12 @@ function Create() {
     <VStack
       className="form"
       borderTopWidth="1px"
-      borderTopColor="white"
+      borderTopColor="black"
       paddingTop="30px"
       height="50vh"
       width="60%"
     >
-      <Heading as="h3" size="l">
-        Create a Proposal
-      </Heading>
+      <Text variant="bold">Create a Proposal</Text>
       <HStack width="100%">
         <Text width="20%">Github Issue:</Text>
         <Input

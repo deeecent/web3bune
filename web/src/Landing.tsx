@@ -1,16 +1,14 @@
-import { Heading, HStack, Spacer, VStack } from "@chakra-ui/react";
+import { HStack, Spacer, Text, VStack } from "@chakra-ui/react";
 import Example from "./Example";
 import Create from "./Create";
 
 function Landing() {
   return (
     <VStack height="100vh" width="100%">
-      <Heading as="h2" size="l">
-        Get funds for your opensource work.
-      </Heading>
+      <Text fontSize="20px">Get paid for your writings.</Text>
       <Spacer />
       <VStack>
-        <Heading as="h2">Examples</Heading>
+        <Text variant="bold">Examples</Text>
       </VStack>
       <HStack>
         <Example />
