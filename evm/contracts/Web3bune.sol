@@ -9,16 +9,26 @@ contract Web3bune is ERC1155, Ownable {
     error NonexistentPost();
     error InvalidFee();
     error InsufficientFunds();
+    error NotOwner();
 
     // Structs and data
     struct Post {
         string tokenURI;
+        address author;
         uint256 price;
         uint256 feeBasisPoints;
     }
 
     // Events
     event PostCreated(
+        address indexed from,
+        uint256 index,
+        string tokenURI,
+        uint256 price,
+        uint256 feeBasisPoints
+    );
+
+    event PostUpdated(
         address indexed from,
         uint256 index,
         string tokenURI,
@@ -54,7 +64,7 @@ contract Web3bune is ERC1155, Ownable {
         if (feeBasisPoints > 10000) {
             revert InvalidFee();
         }
-        _posts.push(Post(tokenURI, price, feeBasisPoints));
+        _posts.push(Post(tokenURI, msg.sender, price, feeBasisPoints));
         _addressToPostIds[msg.sender].push(_posts.length - 1);
 
         emit PostCreated(
@@ -64,6 +74,29 @@ contract Web3bune is ERC1155, Ownable {
             price,
             feeBasisPoints
         );
+    }
+
+    function updatePost(
+        uint256 index,
+        string calldata tokenURI,
+        uint256 price,
+        uint256 feeBasisPoints
+    ) public postExists(index) {
+        Post storage post = _posts[index];
+
+        if (msg.sender != post.author) {
+            revert NotOwner();
+        }
+
+        if (feeBasisPoints > 10000) {
+            revert InvalidFee();
+        }
+
+        post.tokenURI = tokenURI;
+        post.price = price;
+        post.feeBasisPoints = feeBasisPoints;
+
+        emit PostUpdated(msg.sender, index, tokenURI, price, feeBasisPoints);
     }
 
     function mint(address account, uint256 index) public payable {
@@ -76,10 +109,15 @@ contract Web3bune is ERC1155, Ownable {
         uint256 amount
     ) public payable postExists(index) {
         Post memory post = _posts[index];
-
-        if (msg.value < post.price * amount) {
+        uint256 total = post.price * amount;
+        if (msg.value < total) {
             revert InsufficientFunds();
         }
+
+        uint256 protocolFee = (msg.value * post.feeBasisPoints) / 10_000;
+
+        payable(post.author).transfer(msg.value - protocolFee);
+        _protocolFeeReceiver.transfer(protocolFee);
 
         _mint(account, index, amount, "");
     }
@@ -89,6 +127,12 @@ contract Web3bune is ERC1155, Ownable {
     ) public view virtual override postExists(id) returns (string memory) {
         Post memory post = _posts[id];
         return post.tokenURI;
+    }
+
+    function getPost(
+        uint256 id
+    ) public view virtual postExists(id) returns (Post memory) {
+        return _posts[id];
     }
 
     function listPostsByAccount(
