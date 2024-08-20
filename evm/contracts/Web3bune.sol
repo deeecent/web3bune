@@ -14,9 +14,10 @@ contract Web3bune is ERC1155, Ownable {
     // Structs and data
     struct Post {
         string tokenURI;
-        address author;
+        address payable author;
         uint256 price;
         uint256 feeBasisPoints;
+        uint256 aggFeeBasisPoints;
     }
 
     // Events
@@ -25,7 +26,8 @@ contract Web3bune is ERC1155, Ownable {
         uint256 index,
         string tokenURI,
         uint256 price,
-        uint256 feeBasisPoints
+        uint256 feeBasisPoints,
+        uint256 aggFeeBasisPoints
     );
 
     event PostUpdated(
@@ -33,7 +35,8 @@ contract Web3bune is ERC1155, Ownable {
         uint256 index,
         string tokenURI,
         uint256 price,
-        uint256 feeBasisPoints
+        uint256 feeBasisPoints,
+        uint256 aggFeeBasisPoints
     );
 
     uint256 constant PAGE_SIZE = 100;
@@ -59,12 +62,22 @@ contract Web3bune is ERC1155, Ownable {
     function createPost(
         string calldata tokenURI,
         uint256 price,
-        uint256 feeBasisPoints
+        uint256 feeBasisPoints,
+        uint256 aggFeeBasisPoints
     ) public {
-        if (feeBasisPoints > 10000) {
+        if (feeBasisPoints + aggFeeBasisPoints > 10000) {
             revert InvalidFee();
         }
-        _posts.push(Post(tokenURI, msg.sender, price, feeBasisPoints));
+
+        _posts.push(
+            Post(
+                tokenURI,
+                payable(msg.sender),
+                price,
+                feeBasisPoints,
+                aggFeeBasisPoints
+            )
+        );
         _addressToPostIds[msg.sender].push(_posts.length - 1);
 
         emit PostCreated(
@@ -72,7 +85,8 @@ contract Web3bune is ERC1155, Ownable {
             _posts.length - 1,
             tokenURI,
             price,
-            feeBasisPoints
+            feeBasisPoints,
+            aggFeeBasisPoints
         );
     }
 
@@ -80,7 +94,8 @@ contract Web3bune is ERC1155, Ownable {
         uint256 index,
         string calldata tokenURI,
         uint256 price,
-        uint256 feeBasisPoints
+        uint256 feeBasisPoints,
+        uint256 aggFeeBasisPoints
     ) public postExists(index) {
         Post storage post = _posts[index];
 
@@ -88,22 +103,35 @@ contract Web3bune is ERC1155, Ownable {
             revert NotOwner();
         }
 
-        if (feeBasisPoints > 10000) {
+        if (feeBasisPoints + aggFeeBasisPoints > 10000) {
             revert InvalidFee();
         }
 
         post.tokenURI = tokenURI;
         post.price = price;
         post.feeBasisPoints = feeBasisPoints;
+        post.aggFeeBasisPoints = aggFeeBasisPoints;
 
-        emit PostUpdated(msg.sender, index, tokenURI, price, feeBasisPoints);
+        emit PostUpdated(
+            msg.sender,
+            index,
+            tokenURI,
+            price,
+            feeBasisPoints,
+            aggFeeBasisPoints
+        );
     }
 
-    function mint(address account, uint256 index) public payable {
-        mintBatch(account, index, 1);
+    function mint(
+        address payable aggregator,
+        address account,
+        uint256 index
+    ) public payable {
+        mintBatch(aggregator, account, index, 1);
     }
 
     function mintBatch(
+        address payable aggregator,
         address account,
         uint256 index,
         uint256 amount
@@ -115,8 +143,12 @@ contract Web3bune is ERC1155, Ownable {
         }
 
         uint256 protocolFee = (msg.value * post.feeBasisPoints) / 10_000;
+        uint256 aggregatorFee = aggregator == address(0)
+            ? 0
+            : (msg.value * post.aggFeeBasisPoints) / 10_000;
 
-        payable(post.author).transfer(msg.value - protocolFee);
+        post.author.transfer(msg.value - protocolFee - aggregatorFee);
+        aggregator.transfer(aggregatorFee);
         _protocolFeeReceiver.transfer(protocolFee);
 
         _mint(account, index, amount, "");
