@@ -13,6 +13,7 @@ contract Web3bune is ERC1155, Ownable {
     // Structs and data
     struct Post {
         string tokenURI;
+        address author;
         uint256 price;
         uint256 feeBasisPoints;
     }
@@ -54,7 +55,7 @@ contract Web3bune is ERC1155, Ownable {
         if (feeBasisPoints > 10000) {
             revert InvalidFee();
         }
-        _posts.push(Post(tokenURI, price, feeBasisPoints));
+        _posts.push(Post(tokenURI, msg.sender, price, feeBasisPoints));
         _addressToPostIds[msg.sender].push(_posts.length - 1);
 
         emit PostCreated(
@@ -76,10 +77,15 @@ contract Web3bune is ERC1155, Ownable {
         uint256 amount
     ) public payable postExists(index) {
         Post memory post = _posts[index];
-
-        if (msg.value < post.price * amount) {
+        uint256 total = post.price * amount;
+        if (msg.value < total) {
             revert InsufficientFunds();
         }
+
+        uint256 protocolFee = (msg.value * post.feeBasisPoints) / 10_000;
+
+        payable(post.author).transfer(msg.value - protocolFee);
+        _protocolFeeReceiver.transfer(protocolFee);
 
         _mint(account, index, amount, "");
     }

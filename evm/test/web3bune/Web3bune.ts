@@ -7,7 +7,7 @@ import { ethers } from "hardhat";
 import { Web3bune } from "../../types";
 import { deployWeb3buneFixture } from "./Web3bune.fixture";
 
-describe("Propcorn", function () {
+describe("Web3bune", function () {
   let web3bune: Web3bune;
   let alice: SignerWithAddress;
   let bob: SignerWithAddress;
@@ -83,6 +83,18 @@ describe("Propcorn", function () {
       )
         .to.emit(web3bune, "TransferSingle")
         .withArgs(carol.address, ZeroAddress, carol.address, 0, 1);
+    });
+
+    it("should distribute ether to the author and the protocol", async () => {
+      const value = price;
+      const protocolFee = (value * BigInt(feeBasisPoints)) / 10_000n;
+      await web3bune.connect(bob).createPost(tokenURI, price, feeBasisPoints);
+      await expect(
+        web3bune.connect(carol).mint(carol.address, 0, { value }),
+      ).changeEtherBalances(
+        [carol.address, bob.address, alice.address],
+        [-price, price - protocolFee, protocolFee],
+      );
     });
   });
 
