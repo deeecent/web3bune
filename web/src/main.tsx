@@ -89,7 +89,7 @@ const router = createBrowserRouter([
     element: <App />,
   },
   {
-    path: "/proposals/:author/:index",
+    path: "/articles/:tokenID",
     element: <App />,
   },
 ]);

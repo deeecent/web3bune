@@ -2,16 +2,14 @@ import { Button, Flex, Heading, Spacer, VStack } from "@chakra-ui/react";
 import ConnectButton from "./ConnectButton";
 import Landing from "./Landing";
 import { Link, useParams } from "react-router-dom";
-import Proposal from "./Proposal";
+import Article from "./Article";
 
-type ProposalParams = {
-  author: `0x${string}`;
-  index: string;
+type ArticleParams = {
+  tokenID: string;
 };
 
 function App() {
-  const { author, index } = useParams<ProposalParams>();
-  console.log(author);
+  const { tokenID } = useParams<ArticleParams>();
 
   return (
     <VStack height="100vh">
@@ -24,10 +22,8 @@ function App() {
         <Link to="/">Web 3bune</Link>
       </Heading>
       <Spacer />
-      {author !== undefined && index !== undefined && (
-        <Proposal author={author} index={index} />
-      )}
-      {(author === undefined || index === undefined) && <Landing />}
+      {tokenID !== undefined && <Article tokenID={BigInt(tokenID)} />}
+      {tokenID === undefined && <Landing />}
     </VStack>
   );
 }

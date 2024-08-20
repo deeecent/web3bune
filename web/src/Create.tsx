@@ -3,11 +3,8 @@ import {
   Button,
   HStack,
   Input,
-  NumberDecrementStepper,
-  NumberIncrementStepper,
   NumberInput,
   NumberInputField,
-  NumberInputStepper,
   Spacer,
   Text,
   useToast,
@@ -18,15 +15,17 @@ import { create } from "ipfs-http-client";
 import {
   useAccount,
   useChainId,
+  useEnsName,
   useWaitForTransactionReceipt,
   useWatchContractEvent,
   useWriteContract,
 } from "wagmi";
 import { ConnectKitButton } from "connectkit";
-import { propcornAbi as abi, propcornAddress } from "./generated";
+import { web3buneAbi as abi, web3buneAddress } from "./generated";
 import { useEffect, useState } from "react";
 import { parseEther } from "viem";
 import { useNavigate } from "react-router-dom";
+import { strongCipher } from "./utils/cipher";
 
 const client = create({
   url: "https://ipfs.infura.io:5001",
@@ -37,6 +36,8 @@ const client = create({
 
 function Create() {
   const toast = useToast();
+
+  const ipfsURL = "https://web3bune.infura-ipfs.io/ipfs/";
 
   const account = useAccount();
   const { data: hash, writeContract } = useWriteContract();
@@ -49,6 +50,8 @@ function Create() {
 
   const chainId = useChainId();
 
+  const ensName = useEnsName({ address: account.address as `0x${string}` });
+
   const [title, setTitle] = useState<string>();
   const handleTitleChange = (event: any) => setTitle(event.target.value);
 
@@ -59,19 +62,19 @@ function Create() {
   const [content, setContent] = useState<string>();
   const handleContentChange = (event: any) => setContent(event.target.value);
 
-  const [price, setPrice] = useState<number>();
+  const [price, setPrice] = useState<string>();
   const handlePriceChange = (event: any) => setPrice(event);
 
   const [fee, setFee] = useState<number>(5);
   const handleFeeChange = (event: any) => setFee(event);
 
   const unwatch = useWatchContractEvent({
-    address: propcornAddress[chainId],
+    address: web3buneAddress[chainId],
     abi: abi,
-    eventName: "ProposalCreated",
+    eventName: "PostCreated",
     args: { from: account.address },
     onLogs: (logs) => {
-      navigate(`/proposals/${account.address}/${logs[0].args.index}`);
+      navigate(`/articles/${account.address}/${logs[0].args.index}`);
     },
   });
   console.log(unwatch);
@@ -80,12 +83,14 @@ function Create() {
     if (
       content === undefined ||
       description === undefined ||
-      title == undefined
+      title === undefined ||
+      price === undefined
     ) {
       const missing = [
         { value: content, title: "content" },
         { value: description, title: "description" },
         { value: title, title: "title" },
+        { value: price, title: "price" },
       ]
         .filter((x) => x.value === undefined)
         .map((x) => x.title)
@@ -101,24 +106,50 @@ function Create() {
       return;
     }
 
-    let contentCID;
-    let descriptionCID;
+    const image = `
+    <svg width='100%' height='100%' viewBox='0 0 600 600' xmlns='http://www.w3.org/2000/svg'
+    style='background-color: black; color: white;'>
+    <foreignObject width='100%' height='100%'>
+        <style>
+            div {
+                padding: 20px;
+                font-size: 30px;
+                font-size: 3.5vw;
+            }
+        </style>
+        <div xmlns='http://www.w3.org/1999/xhtml'>
+        ${title}
+        </div>
+    </foreignObject>
+</svg>`;
+
+    const metadata = {
+      title: title,
+      description: description,
+      content: strongCipher(content, 42),
+      image: image,
+      attributes: [
+        {
+          trait_type: "Author",
+          value: account.address,
+        },
+      ],
+    };
+
     try {
-      const contentData = await client.add(content);
-      contentCID = contentData.cid;
-      const descriptionData = await client.add(description);
-      descriptionCID = descriptionData.cid;
+      const contentData = await client.add(metadata);
+      let tokenURI = `${ipfsURL}/${contentData.cid.toString()}`;
+
+      writeContract({
+        abi,
+        address: web3buneAddress[chainId],
+        functionName: "createPost",
+        args: [tokenURI, parseEther(price), BigInt(fee * 100)],
+      });
     } catch (error) {
       console.log("Error");
       console.log(error);
     }
-
-    /*writeContract({
-      abi,
-      address: propcornAddress[chainId],
-      functionName: "createProposal",
-      args: [title, BigInt(totalTime), parseEther(amount), BigInt(fee * 100)],
-    });*/
   }
 
   useEffect(() => {
@@ -138,7 +169,17 @@ function Create() {
     >
       <Text variant="bold">Write good stuff</Text>
       <HStack width="100%">
-        <Text width="20%">Description:</Text>
+        <Text width="20%">Title:</Text>
+        <Input
+          value={title}
+          isInvalid={title === undefined}
+          onChange={handleTitleChange}
+          width="80%"
+          placeholder="Title"
+        ></Input>
+      </HStack>
+      <HStack width="100%">
+        <Text width="20%">Description (public):</Text>
         <Input
           value={description}
           isInvalid={description === undefined}
@@ -148,7 +189,7 @@ function Create() {
         ></Input>
       </HStack>
       <HStack width="100%">
-        <Text width="20%">Content:</Text>
+        <Text width="20%">Content (paid):</Text>
         <Input
           value={content}
           isInvalid={content === undefined}
@@ -158,16 +199,15 @@ function Create() {
         ></Input>
       </HStack>
       <HStack width="100%">
-        <Text width="20%">Title:</Text>
+        <Text width="20%">Price:</Text>
         <Input
-          value={title}
-          isInvalid={title === undefined}
-          onChange={handleTitleChange}
+          value={content}
+          isInvalid={content === undefined}
+          onChange={handlePriceChange}
           width="80%"
-          placeholder="Github Issue link"
+          placeholder="Price"
         ></Input>
       </HStack>
-
       <HStack width="100%">
         <Text width="20%">Protocol fee:</Text>
         <NumberInput
@@ -188,7 +228,7 @@ function Create() {
         </Button>
       </HStack>
       <HStack width="100%">
-        <Text width="20%">Creator:</Text>
+        <Text width="20%">Author:</Text>
         <ConnectKitButton.Custom>
           {({ isConnected, show, truncatedAddress, ensName }) => {
             return (
