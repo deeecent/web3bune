@@ -6,16 +6,6 @@ function Landing() {
   return (
     <VStack height="100vh" width="100%">
       <Text fontSize="20px">Get paid for your writings.</Text>
-      <Spacer />
-      <VStack>
-        <Text variant="bold">Examples</Text>
-      </VStack>
-      <HStack>
-        <Example />
-        <Example />
-        <Example />
-      </HStack>
-      <Spacer />
       <Create />
     </VStack>
   );

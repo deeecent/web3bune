@@ -829,6 +829,7 @@ export const ownableAbi = [
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -891,8 +892,10 @@ export const web3buneAbi = [
     ],
     name: 'ERC1155MissingApprovalForAll',
   },
+  { type: 'error', inputs: [], name: 'InsufficientFunds' },
   { type: 'error', inputs: [], name: 'InvalidFee' },
   { type: 'error', inputs: [], name: 'NonexistentPost' },
+  { type: 'error', inputs: [], name: 'NotOwner' },
   {
     type: 'error',
     inputs: [{ name: 'owner', internalType: 'address', type: 'address' }],
@@ -971,8 +974,52 @@ export const web3buneAbi = [
         type: 'uint256',
         indexed: false,
       },
+      {
+        name: 'aggFeeBasisPoints',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
     ],
     name: 'PostCreated',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      { name: 'from', internalType: 'address', type: 'address', indexed: true },
+      {
+        name: 'index',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+      {
+        name: 'tokenURI',
+        internalType: 'string',
+        type: 'string',
+        indexed: false,
+      },
+      {
+        name: 'price',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+      {
+        name: 'feeBasisPoints',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+      {
+        name: 'aggFeeBasisPoints',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+    ],
+    name: 'PostUpdated',
   },
   {
     type: 'event',
@@ -1058,6 +1105,7 @@ export const web3buneAbi = [
       { name: 'tokenURI', internalType: 'string', type: 'string' },
       { name: 'price', internalType: 'uint256', type: 'uint256' },
       { name: 'feeBasisPoints', internalType: 'uint256', type: 'uint256' },
+      { name: 'aggFeeBasisPoints', internalType: 'uint256', type: 'uint256' },
     ],
     name: 'createPost',
     outputs: [],
@@ -1065,7 +1113,7 @@ export const web3buneAbi = [
   },
   {
     type: 'function',
-    inputs: [{ name: 'index', internalType: 'uint256', type: 'uint256' }],
+    inputs: [{ name: 'id', internalType: 'uint256', type: 'uint256' }],
     name: 'getPost',
     outputs: [
       {
@@ -1074,8 +1122,14 @@ export const web3buneAbi = [
         type: 'tuple',
         components: [
           { name: 'tokenURI', internalType: 'string', type: 'string' },
+          { name: 'author', internalType: 'address payable', type: 'address' },
           { name: 'price', internalType: 'uint256', type: 'uint256' },
           { name: 'feeBasisPoints', internalType: 'uint256', type: 'uint256' },
+          {
+            name: 'aggFeeBasisPoints',
+            internalType: 'uint256',
+            type: 'uint256',
+          },
         ],
       },
     ],
@@ -1095,6 +1149,34 @@ export const web3buneAbi = [
     type: 'function',
     inputs: [
       { name: 'account', internalType: 'address', type: 'address' },
+      { name: 'page', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'listPostsByAccount',
+    outputs: [
+      {
+        name: '',
+        internalType: 'struct Web3bune.Post[100]',
+        type: 'tuple[100]',
+        components: [
+          { name: 'tokenURI', internalType: 'string', type: 'string' },
+          { name: 'author', internalType: 'address payable', type: 'address' },
+          { name: 'price', internalType: 'uint256', type: 'uint256' },
+          { name: 'feeBasisPoints', internalType: 'uint256', type: 'uint256' },
+          {
+            name: 'aggFeeBasisPoints',
+            internalType: 'uint256',
+            type: 'uint256',
+          },
+        ],
+      },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'aggregator', internalType: 'address payable', type: 'address' },
+      { name: 'account', internalType: 'address', type: 'address' },
       { name: 'index', internalType: 'uint256', type: 'uint256' },
     ],
     name: 'mint',
@@ -1104,6 +1186,7 @@ export const web3buneAbi = [
   {
     type: 'function',
     inputs: [
+      { name: 'aggregator', internalType: 'address payable', type: 'address' },
       { name: 'account', internalType: 'address', type: 'address' },
       { name: 'index', internalType: 'uint256', type: 'uint256' },
       { name: 'amount', internalType: 'uint256', type: 'uint256' },
@@ -1178,7 +1261,20 @@ export const web3buneAbi = [
   },
   {
     type: 'function',
-    inputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    inputs: [
+      { name: 'index', internalType: 'uint256', type: 'uint256' },
+      { name: 'tokenURI', internalType: 'string', type: 'string' },
+      { name: 'price', internalType: 'uint256', type: 'uint256' },
+      { name: 'feeBasisPoints', internalType: 'uint256', type: 'uint256' },
+      { name: 'aggFeeBasisPoints', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'updatePost',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'id', internalType: 'uint256', type: 'uint256' }],
     name: 'uri',
     outputs: [{ name: '', internalType: 'string', type: 'string' }],
     stateMutability: 'view',
@@ -1186,15 +1282,18 @@ export const web3buneAbi = [
 ] as const
 
 /**
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
 export const web3buneAddress = {
+  10: '0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c',
   1337: '0xA1bBDd84b304EDcfc6dEFE7ABaD8e803F8A408ae',
   11155111: '0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6',
 } as const
 
 /**
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -1861,6 +1960,7 @@ export const useWatchOwnableOwnershipTransferredEvent =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link web3buneAbi}__
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -1872,6 +1972,7 @@ export const useReadWeb3bune = /*#__PURE__*/ createUseReadContract({
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link web3buneAbi}__ and `functionName` set to `"balanceOf"`
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -1884,6 +1985,7 @@ export const useReadWeb3buneBalanceOf = /*#__PURE__*/ createUseReadContract({
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link web3buneAbi}__ and `functionName` set to `"balanceOfBatch"`
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -1897,6 +1999,7 @@ export const useReadWeb3buneBalanceOfBatch =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link web3buneAbi}__ and `functionName` set to `"getPost"`
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -1909,6 +2012,7 @@ export const useReadWeb3buneGetPost = /*#__PURE__*/ createUseReadContract({
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link web3buneAbi}__ and `functionName` set to `"isApprovedForAll"`
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -1920,8 +2024,23 @@ export const useReadWeb3buneIsApprovedForAll =
   })
 
 /**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link web3buneAbi}__ and `functionName` set to `"listPostsByAccount"`
+ *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
+ * -
+ * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
+ */
+export const useReadWeb3buneListPostsByAccount =
+  /*#__PURE__*/ createUseReadContract({
+    abi: web3buneAbi,
+    address: web3buneAddress,
+    functionName: 'listPostsByAccount',
+  })
+
+/**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link web3buneAbi}__ and `functionName` set to `"owner"`
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -1934,6 +2053,7 @@ export const useReadWeb3buneOwner = /*#__PURE__*/ createUseReadContract({
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link web3buneAbi}__ and `functionName` set to `"supportsInterface"`
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -1947,6 +2067,7 @@ export const useReadWeb3buneSupportsInterface =
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link web3buneAbi}__ and `functionName` set to `"uri"`
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -1959,6 +2080,7 @@ export const useReadWeb3buneUri = /*#__PURE__*/ createUseReadContract({
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link web3buneAbi}__
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -1970,6 +2092,7 @@ export const useWriteWeb3bune = /*#__PURE__*/ createUseWriteContract({
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link web3buneAbi}__ and `functionName` set to `"createPost"`
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -1982,6 +2105,7 @@ export const useWriteWeb3buneCreatePost = /*#__PURE__*/ createUseWriteContract({
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link web3buneAbi}__ and `functionName` set to `"mint"`
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -1994,6 +2118,7 @@ export const useWriteWeb3buneMint = /*#__PURE__*/ createUseWriteContract({
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link web3buneAbi}__ and `functionName` set to `"mintBatch"`
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -2006,6 +2131,7 @@ export const useWriteWeb3buneMintBatch = /*#__PURE__*/ createUseWriteContract({
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link web3buneAbi}__ and `functionName` set to `"renounceOwnership"`
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -2019,6 +2145,7 @@ export const useWriteWeb3buneRenounceOwnership =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link web3buneAbi}__ and `functionName` set to `"safeBatchTransferFrom"`
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -2032,6 +2159,7 @@ export const useWriteWeb3buneSafeBatchTransferFrom =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link web3buneAbi}__ and `functionName` set to `"safeTransferFrom"`
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -2045,6 +2173,7 @@ export const useWriteWeb3buneSafeTransferFrom =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link web3buneAbi}__ and `functionName` set to `"setApprovalForAll"`
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -2058,6 +2187,7 @@ export const useWriteWeb3buneSetApprovalForAll =
 /**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link web3buneAbi}__ and `functionName` set to `"transferOwnership"`
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -2069,8 +2199,22 @@ export const useWriteWeb3buneTransferOwnership =
   })
 
 /**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link web3buneAbi}__ and `functionName` set to `"updatePost"`
+ *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
+ * -
+ * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
+ */
+export const useWriteWeb3buneUpdatePost = /*#__PURE__*/ createUseWriteContract({
+  abi: web3buneAbi,
+  address: web3buneAddress,
+  functionName: 'updatePost',
+})
+
+/**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link web3buneAbi}__
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -2082,6 +2226,7 @@ export const useSimulateWeb3bune = /*#__PURE__*/ createUseSimulateContract({
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link web3buneAbi}__ and `functionName` set to `"createPost"`
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -2095,6 +2240,7 @@ export const useSimulateWeb3buneCreatePost =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link web3buneAbi}__ and `functionName` set to `"mint"`
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -2107,6 +2253,7 @@ export const useSimulateWeb3buneMint = /*#__PURE__*/ createUseSimulateContract({
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link web3buneAbi}__ and `functionName` set to `"mintBatch"`
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -2120,6 +2267,7 @@ export const useSimulateWeb3buneMintBatch =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link web3buneAbi}__ and `functionName` set to `"renounceOwnership"`
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -2133,6 +2281,7 @@ export const useSimulateWeb3buneRenounceOwnership =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link web3buneAbi}__ and `functionName` set to `"safeBatchTransferFrom"`
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -2146,6 +2295,7 @@ export const useSimulateWeb3buneSafeBatchTransferFrom =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link web3buneAbi}__ and `functionName` set to `"safeTransferFrom"`
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -2159,6 +2309,7 @@ export const useSimulateWeb3buneSafeTransferFrom =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link web3buneAbi}__ and `functionName` set to `"setApprovalForAll"`
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -2172,6 +2323,7 @@ export const useSimulateWeb3buneSetApprovalForAll =
 /**
  * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link web3buneAbi}__ and `functionName` set to `"transferOwnership"`
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -2183,8 +2335,23 @@ export const useSimulateWeb3buneTransferOwnership =
   })
 
 /**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link web3buneAbi}__ and `functionName` set to `"updatePost"`
+ *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
+ * -
+ * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
+ */
+export const useSimulateWeb3buneUpdatePost =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: web3buneAbi,
+    address: web3buneAddress,
+    functionName: 'updatePost',
+  })
+
+/**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link web3buneAbi}__
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -2196,6 +2363,7 @@ export const useWatchWeb3buneEvent = /*#__PURE__*/ createUseWatchContractEvent({
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link web3buneAbi}__ and `eventName` set to `"ApprovalForAll"`
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -2209,6 +2377,7 @@ export const useWatchWeb3buneApprovalForAllEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link web3buneAbi}__ and `eventName` set to `"OwnershipTransferred"`
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -2222,6 +2391,7 @@ export const useWatchWeb3buneOwnershipTransferredEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link web3buneAbi}__ and `eventName` set to `"PostCreated"`
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -2233,8 +2403,23 @@ export const useWatchWeb3bunePostCreatedEvent =
   })
 
 /**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link web3buneAbi}__ and `eventName` set to `"PostUpdated"`
+ *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
+ * -
+ * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
+ */
+export const useWatchWeb3bunePostUpdatedEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: web3buneAbi,
+    address: web3buneAddress,
+    eventName: 'PostUpdated',
+  })
+
+/**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link web3buneAbi}__ and `eventName` set to `"TransferBatch"`
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -2248,6 +2433,7 @@ export const useWatchWeb3buneTransferBatchEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link web3buneAbi}__ and `eventName` set to `"TransferSingle"`
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */
@@ -2261,6 +2447,7 @@ export const useWatchWeb3buneTransferSingleEvent =
 /**
  * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link web3buneAbi}__ and `eventName` set to `"URI"`
  *
+ * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c)
  * -
  * - [__View Contract on Sepolia Etherscan__](https://sepolia.etherscan.io/address/0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6)
  */

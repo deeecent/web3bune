@@ -12,7 +12,7 @@ export default defineConfig({
         Web3bune: {
           1337: "0xA1bBDd84b304EDcfc6dEFE7ABaD8e803F8A408ae",
           11155111: "0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6",
-          10: "0x85d009b8aB26cD4603513262A5e88962EcF69b5C",
+          10: "0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c",
         },
       },
     }),

@@ -7,6 +7,7 @@ import {
   NumberInputField,
   Spacer,
   Text,
+  Textarea,
   useToast,
   VStack,
 } from "@chakra-ui/react";
@@ -15,7 +16,6 @@ import { create } from "ipfs-http-client";
 import {
   useAccount,
   useChainId,
-  useEnsName,
   useWaitForTransactionReceipt,
   useWatchContractEvent,
   useWriteContract,
@@ -37,7 +37,7 @@ const client = create({
 function Create() {
   const toast = useToast();
 
-  const ipfsURL = "https://web3bune.infura-ipfs.io/ipfs/";
+  const ipfsURL = "https://web3bune.infura-ipfs.io/ipfs";
 
   const account = useAccount();
   const { data: hash, writeContract } = useWriteContract();
@@ -49,8 +49,6 @@ function Create() {
     });
 
   const chainId = useChainId();
-
-  const ensName = useEnsName({ address: account.address as `0x${string}` });
 
   const [title, setTitle] = useState<string>();
   const handleTitleChange = (event: any) => setTitle(event.target.value);
@@ -74,7 +72,8 @@ function Create() {
     eventName: "PostCreated",
     args: { from: account.address },
     onLogs: (logs) => {
-      navigate(`/articles/${account.address}/${logs[0].args.index}`);
+      console.log(logs);
+      navigate(`/articles/${logs[0].args.index}`);
     },
   });
   console.log(unwatch);
@@ -137,14 +136,14 @@ function Create() {
     };
 
     try {
-      const contentData = await client.add(metadata);
+      const contentData = await client.add(JSON.stringify(metadata));
       let tokenURI = `${ipfsURL}/${contentData.cid.toString()}`;
 
       writeContract({
         abi,
         address: web3buneAddress[chainId],
         functionName: "createPost",
-        args: [tokenURI, parseEther(price), BigInt(fee * 100)],
+        args: [tokenURI, parseEther(price), BigInt(fee * 100), BigInt(500)],
       });
     } catch (error) {
       console.log("Error");
@@ -180,36 +179,36 @@ function Create() {
       </HStack>
       <HStack width="100%">
         <Text width="20%">Description (public):</Text>
-        <Input
+        <Textarea
           value={description}
           isInvalid={description === undefined}
           onChange={handleDescriptionChange}
           width="80%"
           placeholder="Description"
-        ></Input>
+        ></Textarea>
       </HStack>
       <HStack width="100%">
         <Text width="20%">Content (paid):</Text>
-        <Input
+        <Textarea
           value={content}
           isInvalid={content === undefined}
           onChange={handleContentChange}
           width="80%"
           placeholder="Content"
-        ></Input>
+        ></Textarea>
       </HStack>
       <HStack width="100%">
         <Text width="20%">Price:</Text>
-        <Input
-          value={content}
-          isInvalid={content === undefined}
+        <NumberInput
+          isInvalid={price === undefined}
+          value={price}
           onChange={handlePriceChange}
-          width="80%"
-          placeholder="Price"
-        ></Input>
+        >
+          <NumberInputField placeholder="Price" />
+        </NumberInput>
       </HStack>
       <HStack width="100%">
-        <Text width="20%">Protocol fee:</Text>
+        <Text width="20%">Aggregator fee:</Text>
         <NumberInput
           isInvalid={fee === undefined}
           value={fee}
@@ -247,6 +246,7 @@ function Create() {
       <Spacer />
       <Button
         width="100%"
+        padding="20px"
         variant="primary"
         disabled={!account.isConnected || isConfirming}
         onClick={submit}

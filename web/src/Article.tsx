@@ -1,9 +1,6 @@
 import {
   Button,
   HStack,
-  Link,
-  NumberInput,
-  NumberInputField,
   Spacer,
   Text,
   useToast,
@@ -12,10 +9,10 @@ import {
 import "./Create.css";
 import {
   useAccount,
+  useBlockNumber,
   useChainId,
   useEnsName,
   useReadContract,
-  useTransaction,
   useWaitForTransactionReceipt,
   useWriteContract,
 } from "wagmi";
@@ -27,12 +24,14 @@ import { strongCipher } from "./utils/cipher";
 
 interface PostParams {
   tokenID: bigint;
+  aggregator?: `0x${string}`;
 }
 
 interface Post {
   tokenURI: string;
   price: bigint;
   feeBasisPoints: bigint;
+  author: string;
 }
 
 interface PostMetadata {
@@ -43,18 +42,17 @@ interface PostMetadata {
 }
 
 function Article(props: PostParams) {
-  const { tokenID } = props;
+  const { tokenID, aggregator } = props;
   const [searchParams] = useSearchParams();
   const [txHash, setTxHash] = useState<`0x${string}`>();
   const toast = useToast();
 
+  const currentBlock = useBlockNumber();
   const account = useAccount();
   const chainId = useChainId();
   const { data: txData } = useWaitForTransactionReceipt({
     hash: txHash,
   });
-
-  const [accountIsAuthor, setAccountIsAuthor] = useState(false);
 
   const { data: postData } = useReadContract({
     abi,
@@ -63,7 +61,7 @@ function Article(props: PostParams) {
     args: [tokenID],
   });
 
-  const { data: balance } = useReadContract({
+  const { data: balance, refetch } = useReadContract({
     abi,
     address: web3buneAddress[chainId],
     functionName: "balanceOf",
@@ -92,9 +90,16 @@ function Article(props: PostParams) {
   }, [balance]);
 
   useEffect(() => {
-    if (txData !== undefined) {
-      console.log(txData);
-      setCanRead(true);
+    if (
+      txData !== undefined &&
+      currentBlock !== undefined &&
+      currentBlock.data !== undefined
+    ) {
+      if (
+        txData.to?.toLowerCase() === web3buneAddress[chainId].toLowerCase() &&
+        txData.blockNumber + BigInt(300) > currentBlock.data
+      )
+        setCanRead(true);
     }
   }, [txData]);
 
@@ -124,7 +129,7 @@ function Article(props: PostParams) {
       abi,
       address: web3buneAddress[chainId],
       functionName: "mint",
-      args: [account.address, BigInt(tokenID)],
+      args: [aggregator || "0x0", account.address, BigInt(tokenID)],
       value: price,
     });
   }
@@ -136,30 +141,36 @@ function Article(props: PostParams) {
   }, [error]);
 
   useEffect(() => {
+    if (isConfirmed) {
+      refetch();
+    }
+  }, [isConfirmed]);
+
+  useEffect(() => {
     if (postData !== undefined) {
       const post = postData as Post;
       const metadata = syncFetch(post.tokenURI).json() as PostMetadata;
 
-      setContent(strongCipher(metadata.content, -42));
+      setContent(metadata.content);
       setDescription(metadata.description);
       setTitle(metadata.title);
       setPrice(post.price);
-      setAuthor(metadata.author);
+      setAuthor(post.author);
     }
   }, [postData]);
 
   return (
     <VStack className="form" height="70vh" width="50%">
       <Text width="100%" fontSize="30px">
-        Article
+        {title}
       </Text>
-      <Text>{title}</Text>
-      <Text>{description}</Text>
-
-      {canRead && <Text>{strongCipher(content, -42)}</Text>}
+      <Text width="100%" fontSize="20px">
+        {description}
+      </Text>
+      {canRead && <Text width="100%">{strongCipher(content, -42)}</Text>}
       {!canRead && (
-        <VStack width="30%">
-          <Text>Content Locked</Text>
+        <VStack width="100%">
+          <Text width="100%">Content Locked</Text>
           <Button onClick={mint}>
             {isConfirming ? "Confirming..." : "MINT UNLOCK NFT"}
           </Button>
@@ -167,8 +178,9 @@ function Article(props: PostParams) {
       )}
 
       <HStack width="100%">
-        <Text width="30%">Author:</Text>
-        <Text>{ensName && ensName.data ? ensName.data : author}</Text>
+        <Text width="100%">
+          Author: {ensName && ensName.data ? ensName.data : author}
+        </Text>
       </HStack>
       <Spacer />
     </VStack>
