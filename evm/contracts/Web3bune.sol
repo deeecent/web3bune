@@ -9,6 +9,7 @@ contract Web3bune is ERC1155, Ownable {
     error NonexistentPost();
     error InvalidFee();
     error InsufficientFunds();
+    error NotOwner();
 
     // Structs and data
     struct Post {
@@ -20,6 +21,14 @@ contract Web3bune is ERC1155, Ownable {
 
     // Events
     event PostCreated(
+        address indexed from,
+        uint256 index,
+        string tokenURI,
+        uint256 price,
+        uint256 feeBasisPoints
+    );
+
+    event PostUpdated(
         address indexed from,
         uint256 index,
         string tokenURI,
@@ -65,6 +74,29 @@ contract Web3bune is ERC1155, Ownable {
             price,
             feeBasisPoints
         );
+    }
+
+    function updatePost(
+        uint256 index,
+        string calldata tokenURI,
+        uint256 price,
+        uint256 feeBasisPoints
+    ) public postExists(index) {
+        Post storage post = _posts[index];
+
+        if (msg.sender != post.author) {
+            revert NotOwner();
+        }
+
+        if (feeBasisPoints > 10000) {
+            revert InvalidFee();
+        }
+
+        post.tokenURI = tokenURI;
+        post.price = price;
+        post.feeBasisPoints = feeBasisPoints;
+
+        emit PostUpdated(msg.sender, index, tokenURI, price, feeBasisPoints);
     }
 
     function mint(address account, uint256 index) public payable {

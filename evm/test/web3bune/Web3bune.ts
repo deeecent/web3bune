@@ -58,6 +58,49 @@ describe("Web3bune", function () {
     });
   });
 
+  describe.only("updatePost", function () {
+    const newTokenURI = "ipfs://Qmnew";
+    const newPrice = parseEther("0.002");
+    const newFeeBasisPoints = 4 * 100;
+
+    beforeEach(async () => {
+      ({ web3bune } = await loadFixture(deployWeb3buneFixture));
+      await web3bune.connect(bob).createPost(tokenURI, price, feeBasisPoints);
+    });
+
+    it("shouldn't allow to update a post created by another user", async () => {
+      await expect(
+        web3bune.connect(carol).updatePost(0, tokenURI, price, 10000),
+      ).revertedWithCustomError(web3bune, "NotOwner");
+    });
+
+    it("shouldn't allow to update a post with a fee greater than 10000", async () => {
+      await expect(
+        web3bune.connect(bob).updatePost(0, tokenURI, price, 10001),
+      ).revertedWithCustomError(web3bune, "InvalidFee");
+    });
+
+    it("should update a post and emit an event", async () => {
+      await expect(
+        web3bune
+          .connect(bob)
+          .updatePost(0, newTokenURI, newPrice, newFeeBasisPoints),
+      )
+        .to.emit(web3bune, "PostUpdated")
+        .withArgs(bob.address, 0, newTokenURI, newPrice, newFeeBasisPoints);
+    });
+
+    it("should store the data properly", async () => {
+      await web3bune
+        .connect(bob)
+        .updatePost(0, newTokenURI, newPrice, newFeeBasisPoints);
+      const p = await web3bune.getPost(0);
+      expect(p.tokenURI).equal(newTokenURI);
+      expect(p.price).equal(newPrice);
+      expect(p.feeBasisPoints).equal(newFeeBasisPoints);
+    });
+  });
+
   describe("mint", function () {
     beforeEach(async () => {
       ({ web3bune } = await loadFixture(deployWeb3buneFixture));
