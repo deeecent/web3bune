@@ -14,6 +14,7 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import "./Create.css";
+import { create } from "ipfs-http-client";
 import {
   useAccount,
   useChainId,
@@ -26,6 +27,13 @@ import { propcornAbi as abi, propcornAddress } from "./generated";
 import { useEffect, useState } from "react";
 import { parseEther } from "viem";
 import { useNavigate } from "react-router-dom";
+
+const client = create({
+  url: "https://ipfs.infura.io:5001",
+  headers: {
+    Authorization: `Basic ${btoa("ceb90fc5a2f2447ab6e20a37021785bb" + ":" + "a57fd07610c1424dad08247da5851234")}`,
+  },
+});
 
 function Create() {
   const toast = useToast();
@@ -41,14 +49,18 @@ function Create() {
 
   const chainId = useChainId();
 
-  const [link, setLink] = useState<string>();
-  const handleLinkChange = (event: any) => setLink(event.target.value);
+  const [title, setTitle] = useState<string>();
+  const handleTitleChange = (event: any) => setTitle(event.target.value);
 
-  const [amount, setAmount] = useState<string>();
-  const handleAmountChange = (event: any) => setAmount(event);
+  const [description, setDescription] = useState<string>();
+  const handleDescriptionChange = (event: any) =>
+    setDescription(event.target.value);
 
-  const [days, setDays] = useState<number>();
-  const [hours, setHours] = useState<number>();
+  const [content, setContent] = useState<string>();
+  const handleContentChange = (event: any) => setContent(event.target.value);
+
+  const [price, setPrice] = useState<number>();
+  const handlePriceChange = (event: any) => setPrice(event);
 
   const [fee, setFee] = useState<number>(5);
   const handleFeeChange = (event: any) => setFee(event);
@@ -65,18 +77,20 @@ function Create() {
   console.log(unwatch);
 
   async function submit() {
-    const totalTime =
-      (hours !== undefined ? Number(hours) * 3600 : 0) +
-      (days !== undefined ? Number(days) * 86400 : 0);
-    if (link === undefined || amount === undefined || totalTime === 0) {
+    if (
+      content === undefined ||
+      description === undefined ||
+      title == undefined
+    ) {
       const missing = [
-        { value: link, title: "github link" },
-        { value: amount, title: "fund amount" },
-        { value: totalTime, title: "working time" },
+        { value: content, title: "content" },
+        { value: description, title: "description" },
+        { value: title, title: "title" },
       ]
-        .filter((x) => x.value === undefined || x.value === 0)
+        .filter((x) => x.value === undefined)
         .map((x) => x.title)
         .join(", ");
+
       toast({
         title: "Missing fields",
         description: `${missing} are missing`,
@@ -87,14 +101,24 @@ function Create() {
       return;
     }
 
-    console.log(totalTime);
+    let contentCID;
+    let descriptionCID;
+    try {
+      const contentData = await client.add(content);
+      contentCID = contentData.cid;
+      const descriptionData = await client.add(description);
+      descriptionCID = descriptionData.cid;
+    } catch (error) {
+      console.log("Error");
+      console.log(error);
+    }
 
-    writeContract({
+    /*writeContract({
       abi,
       address: propcornAddress[chainId],
       functionName: "createProposal",
-      args: [link, BigInt(totalTime), parseEther(amount), BigInt(fee * 100)],
-    });
+      args: [title, BigInt(totalTime), parseEther(amount), BigInt(fee * 100)],
+    });*/
   }
 
   useEffect(() => {
@@ -112,55 +136,38 @@ function Create() {
       height="50vh"
       width="60%"
     >
-      <Text variant="bold">Create a Proposal</Text>
+      <Text variant="bold">Write good stuff</Text>
       <HStack width="100%">
-        <Text width="20%">Github Issue:</Text>
+        <Text width="20%">Description:</Text>
         <Input
-          value={link}
-          isInvalid={link === undefined}
-          onChange={handleLinkChange}
+          value={description}
+          isInvalid={description === undefined}
+          onChange={handleDescriptionChange}
+          width="80%"
+          placeholder="Description"
+        ></Input>
+      </HStack>
+      <HStack width="100%">
+        <Text width="20%">Content:</Text>
+        <Input
+          value={content}
+          isInvalid={content === undefined}
+          onChange={handleContentChange}
+          width="80%"
+          placeholder="Content"
+        ></Input>
+      </HStack>
+      <HStack width="100%">
+        <Text width="20%">Title:</Text>
+        <Input
+          value={title}
+          isInvalid={title === undefined}
+          onChange={handleTitleChange}
           width="80%"
           placeholder="Github Issue link"
         ></Input>
       </HStack>
-      <HStack width="100%">
-        <Text width="20%">Requested Amount:</Text>
-        <NumberInput
-          isInvalid={amount === undefined}
-          value={amount}
-          onChange={handleAmountChange}
-        >
-          <NumberInputField placeholder="ETH" />
-        </NumberInput>
-      </HStack>
-      <HStack width="100%">
-        <Text width="20%">Required time:</Text>
-        <NumberInput
-          width="100px"
-          step={1}
-          min={0}
-          onChange={(event: string) => setHours(Number(event))}
-        >
-          <NumberInputField placeholder="hours" />
-          <NumberInputStepper>
-            <NumberIncrementStepper bg="white" />
-            <NumberDecrementStepper bg="white" />
-          </NumberInputStepper>
-        </NumberInput>
-        <NumberInput
-          width="100px"
-          color="white"
-          step={1}
-          min={0}
-          onChange={(event: string) => setDays(Number(event))}
-        >
-          <NumberInputField placeholder="days" />
-          <NumberInputStepper>
-            <NumberIncrementStepper bg="white" />
-            <NumberDecrementStepper bg="white" />
-          </NumberInputStepper>
-        </NumberInput>
-      </HStack>
+
       <HStack width="100%">
         <Text width="20%">Protocol fee:</Text>
         <NumberInput
