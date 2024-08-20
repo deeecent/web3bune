@@ -13,7 +13,7 @@ import {
 } from "@chakra-ui/react";
 import "./index.css";
 import { ConnectKitProvider } from "connectkit";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createHashRouter, RouterProvider } from "react-router-dom";
 
 const Button = defineStyleConfig({
   // The styles all button have in common
@@ -83,7 +83,7 @@ globalThis.Buffer = Buffer;
 
 const queryClient = new QueryClient();
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: "/",
     element: <App />,

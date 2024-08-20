@@ -1,5 +1,4 @@
-import { HStack, Spacer, Text, VStack } from "@chakra-ui/react";
-import Example from "./Example";
+import { Text, VStack } from "@chakra-ui/react";
 import Create from "./Create";
 
 function Landing() {

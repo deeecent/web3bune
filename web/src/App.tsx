@@ -12,9 +12,11 @@ function App() {
   const { tokenID } = useParams<ArticleParams>();
 
   return (
-    <VStack height="100vh">
+    <VStack>
       <Flex flexDir="row" width="100%" padding="10px">
-        <Button variant="primary">ABOUT</Button>
+        <Link target="blank" to="https://github.com/deeecent/web3bune">
+          <Button variant="primary">ABOUT</Button>
+        </Link>
         <Spacer />
         <ConnectButton />
       </Flex>

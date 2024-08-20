@@ -24,7 +24,6 @@ import { strongCipher } from "./utils/cipher";
 
 interface PostParams {
   tokenID: bigint;
-  aggregator?: `0x${string}`;
 }
 
 interface Post {
@@ -42,7 +41,7 @@ interface PostMetadata {
 }
 
 function Article(props: PostParams) {
-  const { tokenID, aggregator } = props;
+  const { tokenID } = props;
   const [searchParams] = useSearchParams();
   const [txHash, setTxHash] = useState<`0x${string}`>();
   const toast = useToast();
@@ -129,7 +128,11 @@ function Article(props: PostParams) {
       abi,
       address: web3buneAddress[chainId],
       functionName: "mint",
-      args: [aggregator || "0x0", account.address, BigInt(tokenID)],
+      args: [
+        "0x0000000000000000000000000000000000000000",
+        account.address,
+        BigInt(tokenID),
+      ],
       value: price,
     });
   }
@@ -160,18 +163,20 @@ function Article(props: PostParams) {
   }, [postData]);
 
   return (
-    <VStack className="form" height="70vh" width="50%">
+    <VStack className="form" width="50%">
       <Text width="100%" fontSize="30px">
         {title}
       </Text>
       <Text width="100%" fontSize="20px">
-        {description}
+        {description}...
       </Text>
       {canRead && <Text width="100%">{strongCipher(content, -42)}</Text>}
       {!canRead && (
         <VStack width="100%">
-          <Text width="100%">Content Locked</Text>
-          <Button onClick={mint}>
+          <Text width="100%">
+            The rest of the content can be read upon acquiring it
+          </Text>
+          <Button width="100%" onClick={mint}>
             {isConfirming ? "Confirming..." : "MINT UNLOCK NFT"}
           </Button>
         </VStack>

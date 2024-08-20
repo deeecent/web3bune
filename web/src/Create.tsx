@@ -22,7 +22,7 @@ import {
 } from "wagmi";
 import { ConnectKitButton } from "connectkit";
 import { web3buneAbi as abi, web3buneAddress } from "./generated";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { parseEther } from "viem";
 import { useNavigate } from "react-router-dom";
 import { strongCipher } from "./utils/cipher";
@@ -35,20 +35,30 @@ const client = create({
 });
 
 function Create() {
+  const chainId = useChainId();
+  const account = useAccount();
+
+  useWatchContractEvent({
+    address: web3buneAddress[chainId],
+    abi: abi,
+    eventName: "PostCreated",
+    chainId: chainId,
+    args: { from: account.address },
+    onLogs: (logs) => {
+      navigate(`/articles/${logs[0].args.index}`);
+    },
+  });
+
   const toast = useToast();
 
   const ipfsURL = "https://web3bune.infura-ipfs.io/ipfs";
 
-  const account = useAccount();
   const { data: hash, writeContract } = useWriteContract();
   const navigate = useNavigate();
 
-  const { isLoading: isConfirming, isSuccess: isConfirmed } =
-    useWaitForTransactionReceipt({
-      hash,
-    });
-
-  const chainId = useChainId();
+  const { isLoading: isConfirming } = useWaitForTransactionReceipt({
+    hash,
+  });
 
   const [title, setTitle] = useState<string>();
   const handleTitleChange = (event: any) => setTitle(event.target.value);
@@ -65,18 +75,6 @@ function Create() {
 
   const [fee, setFee] = useState<number>(5);
   const handleFeeChange = (event: any) => setFee(event);
-
-  const unwatch = useWatchContractEvent({
-    address: web3buneAddress[chainId],
-    abi: abi,
-    eventName: "PostCreated",
-    args: { from: account.address },
-    onLogs: (logs) => {
-      console.log(logs);
-      navigate(`/articles/${logs[0].args.index}`);
-    },
-  });
-  console.log(unwatch);
 
   async function submit() {
     if (
@@ -150,12 +148,6 @@ function Create() {
       console.log(error);
     }
   }
-
-  useEffect(() => {
-    if (isConfirmed) {
-      console.log("succes");
-    }
-  }, [isConfirmed]);
 
   return (
     <VStack
