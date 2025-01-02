@@ -74,3 +74,33 @@
     local("CloisterBlack"),
     url(./fonts/CloisterBlack.ttf) format("truetype");
 }
+
+@font-face {
+  font-family: "PlayfairDisplay";
+  font-weight: 700;
+  src:
+    local("PlayfairDisplay"),
+    url(./fonts/Playfair_Display/PlayfairDisplay.ttf) format("truetype");
+}
+
+@font-face {
+  font-family: "AbrilFatface";
+  font-weight: 700;
+  src:
+    local("AbrilFatface"),
+    url(./fonts/Abril_Fatface/AbrilFatface-Regular.ttf) format("truetype");
+}
+
+@font-face {
+  font-family: "SourceSerifPro";
+  src:
+    local("SourceSerifPro"),
+    url(./fonts/source-serif-pro/SourceSerifPro-Regular.ttf) format("truetype");
+}
+
+@font-face {
+  font-family: "SourceSerifProBold";
+  src:
+    local("SourceSerifProBold"),
+    url(./fonts/source-serif-pro/SourceSerifPro-Bold.ttf) format("truetype");
+}

@@ -21,7 +21,7 @@ function App() {
         <ConnectButton />
       </Flex>
       <Heading as="h1" size="4xl">
-        <Link to="/">Web 3bune</Link>
+        <Link to="/">Web3bune</Link>
       </Heading>
       <Spacer />
       {tokenID !== undefined && <Article tokenID={BigInt(tokenID)} />}

@@ -14,6 +14,7 @@ import {
 import "./index.css";
 import { ConnectKitProvider } from "connectkit";
 import { createHashRouter, RouterProvider } from "react-router-dom";
+import Home from "./Home.tsx";
 
 const Button = defineStyleConfig({
   // The styles all button have in common
@@ -44,12 +45,12 @@ const Button = defineStyleConfig({
 const Text = defineStyleConfig({
   // The styles all button have in common
   baseStyle: {
-    fontFamily: `"DMMonoRegular", "Arial", "serif"`,
+    fontFamily: `"SourceSerifPro", "Arial", "serif"`,
     fontSize: "15px",
   },
   variants: {
     bold: () => ({
-      fontFamily: `"DMMonoMedium", "Arial", "serif"`,
+      fontFamily: `"SourceSerifProBold", "Arial", "serif"`,
       fontSize: "20px",
     }),
   },
@@ -57,16 +58,16 @@ const Text = defineStyleConfig({
 
 const theme = extendTheme({
   fonts: {
-    heading: `"CloisterBlackHeading", "Arial", "serif"`,
-    body: `"DMMonoRegular", "Arial", "serif"`,
+    heading: `"AbrilFatface", "Arial", "serif"`,
+    body: `"SourceSerifPro", "Arial", "serif"`,
   },
   styles: {
     global: {
       html: {
-        background: "rgb(255, 255, 255)",
+        background: "rgb(250, 250, 249)",
       },
       body: {
-        background: "white",
+        background: "rgb(250, 250, 249)",
         color: "rgb(0, 0, 0)",
         textAlign: "center",
         height: "100vh",
@@ -86,7 +87,7 @@ const queryClient = new QueryClient();
 const router = createHashRouter([
   {
     path: "/",
-    element: <App />,
+    element: <Home />,
   },
   {
     path: "/articles/:tokenID",
