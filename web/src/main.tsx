@@ -46,12 +46,18 @@ const Text = defineStyleConfig({
   // The styles all button have in common
   baseStyle: {
     fontFamily: `"SourceSerifPro", "Arial", "serif"`,
-    fontSize: "15px",
+    fontSize: "1em",
+    color: "rgb(78,85,99)",
   },
   variants: {
     bold: () => ({
       fontFamily: `"SourceSerifProBold", "Arial", "serif"`,
-      fontSize: "20px",
+      fontSize: "1.2em",
+    }),
+    title: () => ({
+      fontFamily: `"SourceSerifPro", "Arial", "serif"`,
+      fontSize: "1em",
+      color: "black",
     }),
   },
 });

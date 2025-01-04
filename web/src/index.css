@@ -84,6 +84,15 @@
 }
 
 @font-face {
+  font-family: "PlayfairDisplayBold";
+  font-weight: 700;
+  src:
+    local("PlayfairDisplayBold"),
+    url(./fonts/Playfair_Display/static/PlayfairDisplay-ExtraBold.ttf)
+      format("truetype");
+}
+
+@font-face {
   font-family: "AbrilFatface";
   font-weight: 700;
   src:
