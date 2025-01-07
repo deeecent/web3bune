@@ -248,7 +248,7 @@ function Card({
 
 function Home() {
   return (
-    <VStack width="70%" paddingTop="10px" maxWidth="1000px" margin="0 auto">
+    <>
       <Header />
       <Title />
       <Spacer />
@@ -295,7 +295,7 @@ function Home() {
           />
         </GridItem>
       </Grid>
-    </VStack>
+    </>
   );
 }
 

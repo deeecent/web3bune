@@ -10,11 +10,13 @@ import {
   ChakraProvider,
   defineStyleConfig,
   extendTheme,
+  VStack,
 } from "@chakra-ui/react";
 import "./index.css";
 import { ConnectKitProvider } from "connectkit";
 import { createHashRouter, RouterProvider } from "react-router-dom";
 import Home from "./Home.tsx";
+import Write from "./Write.tsx";
 
 const Button = defineStyleConfig({
   // The styles all button have in common
@@ -96,6 +98,10 @@ const router = createHashRouter([
     element: <Home />,
   },
   {
+    path: "/write",
+    element: <Write />,
+  },
+  {
     path: "/articles/:tokenID",
     element: <App />,
   },
@@ -107,7 +113,14 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <QueryClientProvider client={queryClient}>
         <ChakraProvider theme={theme}>
           <ConnectKitProvider>
-            <RouterProvider router={router} />
+            <VStack
+              width="70%"
+              paddingTop="10px"
+              maxWidth="1000px"
+              margin="0 auto"
+            >
+              <RouterProvider router={router} />
+            </VStack>
           </ConnectKitProvider>
         </ChakraProvider>
       </QueryClientProvider>

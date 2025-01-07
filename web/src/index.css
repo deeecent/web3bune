@@ -17,6 +17,10 @@
   text-align: left;
 }
 
+.dbox {
+  outline: double #bbbbbb;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     background-color: #f8f8f8;
