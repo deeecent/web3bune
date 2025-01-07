@@ -8,13 +8,51 @@ import {
   Flex,
   Heading,
   Input,
+  Spacer,
   Text,
   VStack,
 } from "@chakra-ui/react";
 import { ElegantBox } from "./CustomComponents";
 import Showdown from "showdown";
 
-const STORAGE_KEY = "TMP_ARTICLE";
+const STORAGE_KEY_PREVIEW = "TMP_PREVIEW";
+const STORAGE_KEY_PAID = "TMP_PAID";
+
+const quillStyle = {
+  ".quill": {
+    display: "flex",
+    flexDirection: "column",
+    height: "100%",
+    fontFamily: `"SourceSerifPro", "Arial", "serif"`,
+  },
+  ".ql-container": {
+    minHeight: "150px" /* Initial height */,
+    overflowY: "visible" /* Allow height expansion */,
+    border: "1px solid #bbb",
+    backgroundColor: "white",
+    borderTop: "none",
+  },
+  ".ql-toolbar": {
+    border: "1px solid #bbb",
+    borderRadius: "0 0 0 0",
+  },
+  ".ql-editor": {
+    fontFamily: `"SourceSerifPro", "Arial", "serif"`,
+    fontSize: "19px",
+    lineHeight: "1.6",
+  },
+  ".ql-editor h1": {
+    fontSize: "38px",
+    fontFamily: `"SourceSerifPro", "Arial", "serif"`,
+  },
+  ".ql-editor h2": {
+    fontSize: "28px",
+    fontFamily: `"SourceSerifPro", "Arial", "serif"`,
+  },
+  ".ql-editor p": {
+    marginBottom: "20px",
+  },
+};
 
 // Custom Toolbar
 const modules = {
@@ -29,40 +67,48 @@ const modules = {
 };
 
 function Write() {
-  const [content, setContent] = useState("");
+  const [preview, setPreview] = useState("");
+  const [paid, setPaid] = useState("");
 
   const turndownService = new TurndownService();
   const markdownConverter = new Showdown.Converter();
 
-  const handleContentChange = (value: string) => {
-    setContent(value);
+  const handlePreviewChange = (value: string) => {
+    setPreview(value);
     const markdown = turndownService.turndown(value); // Convert HTML to Markdown
-    localStorage.setItem(STORAGE_KEY, markdown);
+    localStorage.setItem(STORAGE_KEY_PREVIEW, markdown);
+  };
+
+  const handlePaidChange = (value: string) => {
+    setPaid(value);
+    const markdown = turndownService.turndown(value); // Convert HTML to Markdown
+    localStorage.setItem(STORAGE_KEY_PAID, markdown);
   };
 
   useEffect(() => {
-    const savedMarkdown = localStorage.getItem(STORAGE_KEY);
-    if (savedMarkdown) {
-      const html = markdownConverter.makeHtml(savedMarkdown);
-      setContent(html);
+    const savedPreview = localStorage.getItem(STORAGE_KEY_PREVIEW);
+    if (savedPreview) {
+      const html = markdownConverter.makeHtml(savedPreview);
+      setPreview(html);
+    }
+    const savedPaid = localStorage.getItem(STORAGE_KEY_PAID);
+    if (savedPaid) {
+      const html = markdownConverter.makeHtml(savedPaid);
+      setPaid(html);
     }
   }, []);
 
   return (
     <Flex
       direction="column"
-      overflow="hidden"
+      overflow="auto"
       width="100%"
-      height="100vh"
+      minHeight="100vh"
       alignItems="stretch"
       padding="20px"
+      gap="20px"
     >
-      <VStack
-        height="100px"
-        width="100%"
-        marginBottom="20px"
-        borderBottom="2px solid black"
-      >
+      <VStack height="100px" width="100%" borderBottom="2px solid black">
         <Heading size="2xl">New Article</Heading>
         <Text>Write good content</Text>
       </VStack>
@@ -78,37 +124,77 @@ function Write() {
           placeholder="Article Title"
         ></Input>
       </ElegantBox>
-      <Box
-        flex="1"
-        marginBottom="20px"
-        marginTop="20px"
-        overflow="hidden"
-        sx={{
-          ".quill": {
-            display: "flex",
-            flexDirection: "column",
-            height: "100%",
-          },
-          ".ql-container": {
-            flex: "1",
-            overflow: "auto",
-            border: "1px solid #bbb",
-            borderTop: "none",
-          },
-          ".ql-toolbar": {
-            border: "1px solid #bbb",
-            borderRadius: "0 0 0 0",
-          },
-        }}
+      <ElegantBox
+        backgroundColor="rgb(254,251,236)"
+        borderColor="rgb(247,231,144)"
       >
+        <Text variant="bold">Free Preview</Text>
+      </ElegantBox>
+      <Box overflow="visible" sx={quillStyle}>
         <ReactQuill
-          theme="snow"
-          value={content}
-          onChange={handleContentChange}
+          value={preview}
+          onChange={handlePreviewChange}
           modules={modules}
           placeholder="Start typing here..."
         />
       </Box>
+      <ElegantBox
+        backgroundColor="rgb(254,251,236)"
+        borderColor="rgb(247,231,144)"
+      >
+        <Text variant="bold">Paid Content</Text>
+      </ElegantBox>
+      <Box overflow="visible" sx={quillStyle}>
+        <ReactQuill
+          value={paid}
+          onChange={handlePaidChange}
+          modules={modules}
+          placeholder="Start typing here..."
+        />
+      </Box>
+
+      <ElegantBox
+        backgroundColor="rgb(254,251,236)"
+        borderColor="rgb(247,231,144)"
+        padding="20px"
+      >
+        <Heading textAlign="left" variant="title" fontSize="1.5em">
+          Revenue Configuration
+        </Heading>
+        <Text variant="title" textAlign="left" marginTop="20px">
+          Article Price (ETH)
+        </Text>
+        <Input placeholder="0.01"></Input>
+        <Text variant="title" textAlign="left" marginTop="10px">
+          Distributor Share (%)
+        </Text>
+        <Input placeholder="20"></Input>
+        <Box
+          marginTop="20px"
+          padding="10px"
+          textAlign="left"
+          backgroundColor="rgb(252,247,219)"
+        >
+          <Flex direction="row">
+            <Text fontFamily="monospace" alignSelf="flex-start">
+              Your Share per sale
+            </Text>
+            <Spacer />
+            <Text fontFamily="monospace" alignSelf="flex-end">
+              0.008 ETH
+            </Text>
+          </Flex>
+          <Flex direction="row">
+            <Text fontFamily="monospace" alignSelf="flex-start">
+              Distributor Share per sale
+            </Text>
+            <Spacer />
+            <Text fontFamily="monospace" alignSelf="flex-end">
+              0.002 ETH
+            </Text>
+          </Flex>
+        </Box>
+      </ElegantBox>
 
       <Button
         marginTop="auto"
@@ -117,7 +203,7 @@ function Write() {
         color="white"
         alignSelf="flex-start"
         onClick={() => {
-          const markdown = turndownService.turndown(content);
+          const markdown = turndownService.turndown(preview);
           console.log("Exported Markdown:", markdown);
         }}
       >
