@@ -151,13 +151,9 @@ function Write() {
       <ElegantBox backgroundColor="white">
         <Input
           border="none"
-          _placeholder={{
-            transform: "translateY(4px)",
-            color: "gray.500", // Change the color
-            fontSize: "2em", // Change the font size
-            fontWeight: "bold", // Change the font weight
-          }}
           placeholder="Article Title"
+          fontSize="2.2em"
+          fontFamily="SourceSerifProBold"
         ></Input>
       </ElegantBox>
       <ElegantBox
