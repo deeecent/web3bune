@@ -19,6 +19,7 @@ export function ElegantBox({
         border={`1px solid ${borderColor}`}
         margin="2px"
         padding={padding}
+        height="100%"
       >
         {children}
       </Box>

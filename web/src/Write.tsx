@@ -7,7 +7,11 @@ import {
   Button,
   Flex,
   Heading,
+  HStack,
   Input,
+  InputGroup,
+  InputRightElement,
+  SimpleGrid,
   Spacer,
   Text,
   VStack,
@@ -66,6 +70,38 @@ const modules = {
   ],
 };
 
+function ConfigurationInput({
+  title,
+  defaultValue,
+}: {
+  title: string;
+  defaultValue: string;
+}) {
+  return (
+    <VStack alignItems="left">
+      <Text
+        variant="boldTitle"
+        textAlign="left"
+        fontSize="1em"
+        marginTop="10px"
+      >
+        {title}
+      </Text>
+      <HStack>
+        <InputGroup>
+          <Input textAlign="right" value={defaultValue}></Input>
+          <InputRightElement pointerEvents="none">
+            <Text>%</Text>
+          </InputRightElement>
+        </InputGroup>
+        <Button>5%</Button>
+        <Button>10%</Button>
+        <Button>15%</Button>
+      </HStack>
+    </VStack>
+  );
+}
+
 function Write() {
   const [preview, setPreview] = useState("");
   const [paid, setPaid] = useState("");
@@ -112,7 +148,7 @@ function Write() {
         <Heading size="2xl">New Article</Heading>
         <Text>Write good content</Text>
       </VStack>
-      <ElegantBox>
+      <ElegantBox backgroundColor="white">
         <Input
           border="none"
           _placeholder={{
@@ -153,62 +189,105 @@ function Write() {
         />
       </Box>
 
-      <ElegantBox
-        backgroundColor="rgb(254,251,236)"
-        borderColor="rgb(247,231,144)"
-        padding="20px"
-      >
-        <Heading textAlign="left" variant="title" fontSize="1.5em">
-          Revenue Configuration
-        </Heading>
-        <Text variant="title" textAlign="left" marginTop="20px">
-          Article Price (ETH)
-        </Text>
-        <Input placeholder="0.01"></Input>
-        <Text variant="title" textAlign="left" marginTop="10px">
-          Distributor Share (%)
-        </Text>
-        <Input placeholder="20"></Input>
-        <Box
-          marginTop="20px"
-          padding="10px"
-          textAlign="left"
-          backgroundColor="rgb(252,247,219)"
+      <SimpleGrid minChildWidth="300px">
+        <ElegantBox
+          backgroundColor="rgb(254,251,236)"
+          borderColor="rgb(247,231,144)"
+          padding="20px"
         >
-          <Flex direction="row">
-            <Text fontFamily="monospace" alignSelf="flex-start">
-              Your Share per sale
+          <Heading textAlign="left" variant="title" fontSize="1.5em">
+            Revenue Configuration
+          </Heading>
+          <VStack alignItems="left" width="250px" minWidth="250px">
+            <Text
+              variant="boldTitle"
+              textAlign="left"
+              fontSize="1em"
+              marginTop="20px"
+            >
+              Article Price (ETH)
             </Text>
+            <Input textAlign="right" placeholder="0.01"></Input>
+            <ConfigurationInput
+              defaultValue="5"
+              title="Distributor Share (%)"
+            />
+            <ConfigurationInput defaultValue="1" title="Network Fee (%)" />
+          </VStack>
+        </ElegantBox>
+        <ElegantBox
+          backgroundColor="rgb(254,251,236)"
+          borderColor="rgb(247,231,144)"
+          padding="20px"
+        >
+          <VStack width="100%" alignItems="left" height="100%">
+            <Heading textAlign="left" variant="title" fontSize="1.5em">
+              Revenue Split
+            </Heading>
+            <Box
+              padding="10px"
+              marginTop="20px"
+              textAlign="left"
+              backgroundColor="rgb(252,247,219)"
+              borderBottom="2px solid black"
+            >
+              <Flex direction="row">
+                <Text fontFamily="monospace" alignSelf="flex-start">
+                  Your Share
+                </Text>
+                <Spacer />
+                <Text fontFamily="monospace" alignSelf="flex-end">
+                  0.008 ETH
+                </Text>
+              </Flex>
+              <Flex direction="row">
+                <Text fontFamily="monospace" alignSelf="flex-start">
+                  Distributor Share
+                </Text>
+                <Spacer />
+                <Text fontFamily="monospace" alignSelf="flex-end">
+                  0.002 ETH
+                </Text>
+              </Flex>
+              <Flex direction="row">
+                <Text fontFamily="monospace" alignSelf="flex-start">
+                  Network Fee
+                </Text>
+                <Spacer />
+                <Text fontFamily="monospace" alignSelf="flex-end">
+                  0.001 ETH
+                </Text>
+              </Flex>
+            </Box>
+            <Flex direction="row" padding="10px">
+              <Text
+                fontWeight="bold"
+                fontFamily="monospace"
+                alignSelf="flex-start"
+              >
+                Total
+              </Text>
+              <Spacer />
+              <Text fontFamily="monospace" alignSelf="flex-end">
+                0.01 ETH
+              </Text>
+            </Flex>
             <Spacer />
-            <Text fontFamily="monospace" alignSelf="flex-end">
-              0.008 ETH
-            </Text>
-          </Flex>
-          <Flex direction="row">
-            <Text fontFamily="monospace" alignSelf="flex-start">
-              Distributor Share per sale
-            </Text>
-            <Spacer />
-            <Text fontFamily="monospace" alignSelf="flex-end">
-              0.002 ETH
-            </Text>
-          </Flex>
-        </Box>
-      </ElegantBox>
-
-      <Button
-        marginTop="auto"
-        background="rgb(196,127,35)"
-        borderColor="rgb(160,90,25)"
-        color="white"
-        alignSelf="flex-start"
-        onClick={() => {
-          const markdown = turndownService.turndown(preview);
-          console.log("Exported Markdown:", markdown);
-        }}
-      >
-        PUBLISH ARTICLE
-      </Button>
+            <Button
+              background="rgb(196,127,35)"
+              borderColor="rgb(160,90,25)"
+              color="white"
+              width="100%"
+              onClick={() => {
+                const markdown = turndownService.turndown(preview);
+                console.log("Exported Markdown:", markdown);
+              }}
+            >
+              PUBLISH ARTICLE
+            </Button>
+          </VStack>
+        </ElegantBox>
+      </SimpleGrid>
     </Flex>
   );
 }

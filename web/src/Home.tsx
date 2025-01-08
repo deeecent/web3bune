@@ -238,7 +238,12 @@ function Card({
         <Spacer />
         <Text>{price} ETH</Text>
         <Spacer />
-        <Button background="rgb(196,127,35)" color="white">
+        <Button
+          fontSize="0.8em"
+          fontFamily="SourceSerifProBold"
+          background="rgb(196,127,35)"
+          color="white"
+        >
           Share & Earn {fee * 100}%
         </Button>
       </HStack>
@@ -257,11 +262,11 @@ function Home() {
       <Grid
         width="100%"
         templateRows="repeat(2, 1fr)"
-        templateColumns="repeat(3, 1fr)"
+        templateColumns="repeat(4, 1fr)"
         gap={4}
         marginTop="20px"
       >
-        <GridItem rowSpan={2} colSpan={1}>
+        <GridItem rowSpan={2} colSpan={2}>
           <Card
             height="100px"
             title="The Future of Decentralized Publishing"

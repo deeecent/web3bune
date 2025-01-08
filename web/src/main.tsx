@@ -56,6 +56,11 @@ const Text = defineStyleConfig({
       fontFamily: `"SourceSerifProBold", "Arial", "serif"`,
       fontSize: "1.2em",
     }),
+    boldTitle: () => ({
+      fontFamily: `"SourceSerifProBold", "Arial", "serif"`,
+      fontSize: "1.2em",
+      color: "black",
+    }),
     title: () => ({
       fontFamily: `"SourceSerifPro", "Arial", "serif"`,
       fontSize: "1em",
