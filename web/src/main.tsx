@@ -24,13 +24,11 @@ const Button = defineStyleConfig({
     fontWeight: "bold",
     textTransform: "uppercase",
     borderRadius: "0", // <-- border radius is same for all variants and sizes
-    borderColor: "#000000",
-    borderWidth: "0.5px",
   },
   variants: {
     primary: () => ({
-      color: "black",
-      backgroundColor: "white",
+      color: "white",
+      backgroundColor: "bune.darkGrey",
     }),
     disabled: () => ({
       fontSize: "md",
@@ -47,43 +45,42 @@ const Button = defineStyleConfig({
 const Text = defineStyleConfig({
   // The styles all button have in common
   baseStyle: {
-    fontFamily: `"SourceSerifPro", "Arial", "serif"`,
+    fontFamily: `"Courier New", "monospace"`,
     fontSize: "1em",
-    color: "rgb(78,85,99)",
   },
   variants: {
-    bold: () => ({
-      fontFamily: `"SourceSerifProBold", "Arial", "serif"`,
-      fontSize: "1.2em",
-    }),
-    boldTitle: () => ({
-      fontFamily: `"SourceSerifProBold", "Arial", "serif"`,
-      fontSize: "1.2em",
-      color: "black",
-    }),
     title: () => ({
-      fontFamily: `"SourceSerifPro", "Arial", "serif"`,
-      fontSize: "1em",
-      color: "black",
+      fontFamily: `"Courier New", "monospace"`,
+      fontWeight: "bold",
+      fontStyle: "italic",
+      fontSize: "1.2em",
     }),
   },
 });
 
+const customColors = {
+  bune: {
+    darkGrey: "rgb(51,51,51)",
+    lightGrey: "rgb(240, 240, 240)",
+  },
+};
+
 const theme = extendTheme({
+  colors: customColors,
   fonts: {
-    heading: `"AbrilFatface", "Arial", "serif"`,
-    body: `"SourceSerifPro", "Arial", "serif"`,
+    heading: `"Courier New", "monospace"`,
+    body: `"Courier New", "monospace"`,
   },
   styles: {
     global: {
       html: {
-        background: "rgb(250, 250, 249)",
+        background: "bune.lightGrey",
       },
       body: {
-        background: "rgb(250, 250, 249)",
-        color: "rgb(0, 0, 0)",
+        background: "bune.lightGrey",
+        color: "bune.darkGrey",
         textAlign: "center",
-        height: "100vh",
+        minHeight: "100vh",
       },
     },
   },
@@ -118,12 +115,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <QueryClientProvider client={queryClient}>
         <ChakraProvider theme={theme}>
           <ConnectKitProvider>
-            <VStack
-              width="70%"
-              paddingTop="10px"
-              maxWidth="1000px"
-              margin="0 auto"
-            >
+            <VStack width="70%" maxWidth="1000px" margin="0 auto">
               <RouterProvider router={router} />
             </VStack>
           </ConnectKitProvider>

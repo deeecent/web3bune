@@ -16,18 +16,25 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
-import { ElegantBox } from "./CustomComponents";
+import {
+  BuneInput,
+  ElegantBox,
+  GlitchButton,
+  Windows98Button,
+  Windows98ButtonGroup,
+} from "./CustomComponents";
 import Showdown from "showdown";
 
 const STORAGE_KEY_PREVIEW = "TMP_PREVIEW";
 const STORAGE_KEY_PAID = "TMP_PAID";
+const FONT = `"Courier New", "monospace"`;
 
 const quillStyle = {
   ".quill": {
     display: "flex",
     flexDirection: "column",
     height: "100%",
-    fontFamily: `"SourceSerifPro", "Arial", "serif"`,
+    fontFamily: `${FONT}`,
   },
   ".ql-container": {
     minHeight: "150px" /* Initial height */,
@@ -41,17 +48,17 @@ const quillStyle = {
     borderRadius: "0 0 0 0",
   },
   ".ql-editor": {
-    fontFamily: `"SourceSerifPro", "Arial", "serif"`,
+    fontFamily: `${FONT}`,
     fontSize: "19px",
     lineHeight: "1.6",
   },
   ".ql-editor h1": {
     fontSize: "38px",
-    fontFamily: `"SourceSerifPro", "Arial", "serif"`,
+    fontFamily: `${FONT}`,
   },
   ".ql-editor h2": {
     fontSize: "28px",
-    fontFamily: `"SourceSerifPro", "Arial", "serif"`,
+    fontFamily: `${FONT}`,
   },
   ".ql-editor p": {
     marginBottom: "20px",
@@ -79,24 +86,22 @@ function ConfigurationInput({
 }) {
   return (
     <VStack alignItems="left">
-      <Text
-        variant="boldTitle"
-        textAlign="left"
-        fontSize="1em"
-        marginTop="10px"
-      >
+      <Text textAlign="left" marginTop="10px">
         {title}
       </Text>
       <HStack>
-        <InputGroup>
-          <Input textAlign="right" value={defaultValue}></Input>
+        <InputGroup minWidth="90px">
+          <Input
+            borderRadius="0px"
+            textAlign="right"
+            backgroundColor="white"
+            value={defaultValue}
+          ></Input>
           <InputRightElement pointerEvents="none">
             <Text>%</Text>
           </InputRightElement>
         </InputGroup>
-        <Button>5%</Button>
-        <Button>10%</Button>
-        <Button>15%</Button>
+        <Windows98ButtonGroup labels={["5%", "10%", "15%", "0%"]} />
       </HStack>
     </VStack>
   );
@@ -141,27 +146,36 @@ function Write() {
       width="100%"
       minHeight="100vh"
       alignItems="stretch"
+      textAlign="left"
       padding="20px"
       gap="20px"
     >
-      <VStack height="100px" width="100%" borderBottom="2px solid black">
+      <VStack height="100px" width="100%">
         <Heading size="2xl">New Article</Heading>
         <Text>Write good content</Text>
       </VStack>
-      <ElegantBox backgroundColor="white">
+      <Box
+        backgroundColor="white"
+        height="50px"
+        boxShadow="5px 5px 0px 0px black"
+      >
         <Input
+          height="100%"
           border="none"
+          borderRadius="0px"
           placeholder="Article Title"
           fontSize="2.2em"
-          fontFamily="SourceSerifProBold"
+          fontWeight="bold"
         ></Input>
-      </ElegantBox>
-      <ElegantBox
-        backgroundColor="rgb(254,251,236)"
-        borderColor="rgb(247,231,144)"
-      >
-        <Text variant="bold">Free Preview</Text>
-      </ElegantBox>
+      </Box>
+      <Spacer />
+      <Box>
+        <Text variant="title">Free Preview</Text>
+        <Text>
+          A description, subtitle, paragraph... whatever works to make the
+          reader by the rest.
+        </Text>
+      </Box>
       <Box overflow="visible" sx={quillStyle}>
         <ReactQuill
           value={preview}
@@ -170,12 +184,13 @@ function Write() {
           placeholder="Start typing here..."
         />
       </Box>
-      <ElegantBox
-        backgroundColor="rgb(254,251,236)"
-        borderColor="rgb(247,231,144)"
-      >
-        <Text variant="bold">Paid Content</Text>
-      </ElegantBox>
+      <Spacer />
+      <Box>
+        <Text variant="title">Paid Content</Text>
+        <Text>
+          This will be shown to the reader only after purchasing the article.
+        </Text>
+      </Box>
       <Box overflow="visible" sx={quillStyle}>
         <ReactQuill
           value={paid}
@@ -185,11 +200,12 @@ function Write() {
         />
       </Box>
 
-      <SimpleGrid minChildWidth="300px">
-        <ElegantBox
-          backgroundColor="rgb(254,251,236)"
-          borderColor="rgb(247,231,144)"
+      <SimpleGrid minChildWidth="300px" gap="20px">
+        <Box
+          backgroundColor="bune.lightGrey"
+          border="1px dashed black"
           padding="20px"
+          boxShadow="5px 5px 0px 0px black"
         >
           <Heading textAlign="left" variant="title" fontSize="1.5em">
             Revenue Configuration
@@ -203,18 +219,19 @@ function Write() {
             >
               Article Price (ETH)
             </Text>
-            <Input textAlign="right" placeholder="0.01"></Input>
+            <BuneInput placehodler="0.01" />
             <ConfigurationInput
               defaultValue="5"
               title="Distributor Share (%)"
             />
             <ConfigurationInput defaultValue="1" title="Network Fee (%)" />
           </VStack>
-        </ElegantBox>
-        <ElegantBox
-          backgroundColor="rgb(254,251,236)"
-          borderColor="rgb(247,231,144)"
+        </Box>
+        <Box
+          backgroundColor="bune.lightGrey"
+          border="1px dashed black"
           padding="20px"
+          boxShadow="5px 5px 0px 0px black"
         >
           <VStack width="100%" alignItems="left" height="100%">
             <Heading textAlign="left" variant="title" fontSize="1.5em">
@@ -224,7 +241,7 @@ function Write() {
               padding="10px"
               marginTop="20px"
               textAlign="left"
-              backgroundColor="rgb(252,247,219)"
+              backgroundColor="white"
               borderBottom="2px solid black"
             >
               <Flex direction="row">
@@ -269,20 +286,9 @@ function Write() {
               </Text>
             </Flex>
             <Spacer />
-            <Button
-              background="rgb(196,127,35)"
-              borderColor="rgb(160,90,25)"
-              color="white"
-              width="100%"
-              onClick={() => {
-                const markdown = turndownService.turndown(preview);
-                console.log("Exported Markdown:", markdown);
-              }}
-            >
-              PUBLISH ARTICLE
-            </Button>
+            <GlitchButton label="Publish Article" />
           </VStack>
-        </ElegantBox>
+        </Box>
       </SimpleGrid>
     </Flex>
   );
