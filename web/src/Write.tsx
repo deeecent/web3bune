@@ -4,7 +4,6 @@ import "react-quill/dist/quill.snow.css";
 import TurndownService from "turndown";
 import {
   Box,
-  Button,
   Flex,
   Heading,
   HStack,
@@ -16,18 +15,15 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
-import {
-  BuneInput,
-  ElegantBox,
-  GlitchButton,
-  Windows98Button,
-  Windows98ButtonGroup,
-} from "./CustomComponents";
+import { GlitchButton, Header, Windows98ButtonGroup } from "./CustomComponents";
 import Showdown from "showdown";
+import { EthToUsdConverter } from "./EthConverter";
 
+const STORAGE_KEY_TITLE = "TMP_TITLE";
 const STORAGE_KEY_PREVIEW = "TMP_PREVIEW";
 const STORAGE_KEY_PAID = "TMP_PAID";
-const FONT = `"Courier New", "monospace"`;
+const FONT = `"Courier New Medium", "monospace"`;
+const FONT_BOLD = `"Courier New", "monospace"`;
 
 const quillStyle = {
   ".quill": {
@@ -49,19 +45,20 @@ const quillStyle = {
   },
   ".ql-editor": {
     fontFamily: `${FONT}`,
-    fontSize: "19px",
+    fontSize: "1.4em",
     lineHeight: "1.6",
   },
   ".ql-editor h1": {
-    fontSize: "38px",
-    fontFamily: `${FONT}`,
+    fontSize: "2.5em",
+    fontFamily: `${FONT_BOLD}`,
   },
   ".ql-editor h2": {
-    fontSize: "28px",
-    fontFamily: `${FONT}`,
+    fontSize: "2.1em",
+    fontWeight: "bold",
+    fontFamily: `${FONT_BOLD}`,
   },
   ".ql-editor p": {
-    marginBottom: "20px",
+    marginBottom: "1.5em",
   },
 };
 
@@ -77,13 +74,75 @@ const modules = {
   ],
 };
 
+function ArticlePriceInput({
+  defaultValue,
+  onChange,
+}: {
+  defaultValue: string;
+  onChange: (value: string) => any;
+}) {
+  const [value, setValue] = useState<string>(defaultValue);
+  const handleValueChange = (event: any) => setValue(event.target.value);
+  const [debouncedValue, setDebouncedValue] = useState(
+    parseFloat(defaultValue)
+  );
+
+  useEffect(() => {
+    onChange(value);
+
+    const handler = setTimeout(() => {
+      setDebouncedValue(parseFloat(value)); // Update debounced value after 1 second
+    }, 1000);
+
+    return () => clearTimeout(handler); // Clear timeout on value change
+  }, [value]);
+
+  return (
+    <VStack alignItems="left">
+      <Text
+        variant="boldTitle"
+        textAlign="left"
+        fontSize="1em"
+        marginTop="20px"
+      >
+        Article Price
+      </Text>
+      <HStack>
+        <InputGroup width="50%" minWidth="90px">
+          <Input
+            borderRadius="0px"
+            color="black"
+            textAlign="right"
+            backgroundColor="white"
+            onChange={handleValueChange}
+            value={value}
+          ></Input>
+          <InputRightElement pointerEvents="none">
+            <Text>ETH</Text>
+          </InputRightElement>
+        </InputGroup>
+        <EthToUsdConverter ethValue={debouncedValue} />
+      </HStack>
+    </VStack>
+  );
+}
+
 function ConfigurationInput({
   title,
   defaultValue,
+  labels,
+  onChange,
 }: {
   title: string;
   defaultValue: string;
+  labels: string[];
+  onChange: (value: string) => any;
 }) {
+  const [value, setValue] = useState<string>(defaultValue);
+  const handleValueChange = (event: any) => setValue(event.target.value);
+
+  useEffect(() => onChange(value), [value]);
+
   return (
     <VStack alignItems="left">
       <Text textAlign="left" marginTop="10px">
@@ -93,23 +152,39 @@ function ConfigurationInput({
         <InputGroup minWidth="90px">
           <Input
             borderRadius="0px"
+            color="black"
             textAlign="right"
             backgroundColor="white"
-            value={defaultValue}
+            onChange={handleValueChange}
+            value={value}
           ></Input>
           <InputRightElement pointerEvents="none">
             <Text>%</Text>
           </InputRightElement>
         </InputGroup>
-        <Windows98ButtonGroup labels={["5%", "10%", "15%", "0%"]} />
+        <Windows98ButtonGroup
+          onClick={(index) => setValue(labels[index].replace("%", ""))}
+          labels={labels}
+        />
       </HStack>
     </VStack>
   );
 }
 
 function Write() {
+  const [title, setTitle] = useState<string>();
   const [preview, setPreview] = useState("");
   const [paid, setPaid] = useState("");
+
+  const DEFAULT_PRICE = 0.001;
+  const DEFAULT_NETWORK_TIP = 0.01;
+  const DEFAULT_DISTRIBUTOR_REWARD = 0.1;
+
+  const [price, setPrice] = useState(DEFAULT_PRICE);
+  const [networkTip, setNetworkTip] = useState(DEFAULT_NETWORK_TIP);
+  const [distributorReward, setDistributorReward] = useState(
+    DEFAULT_DISTRIBUTOR_REWARD
+  );
 
   const turndownService = new TurndownService();
   const markdownConverter = new Showdown.Converter();
@@ -118,6 +193,23 @@ function Write() {
     setPreview(value);
     const markdown = turndownService.turndown(value); // Convert HTML to Markdown
     localStorage.setItem(STORAGE_KEY_PREVIEW, markdown);
+  };
+
+  const handleTitleChange = (event: any) => {
+    setTitle(event.target.value);
+    localStorage.setItem(STORAGE_KEY_TITLE, event.target.value);
+  };
+
+  const handleNetworkTipChange = (value: string) => {
+    setNetworkTip(parseFloat(value) / 100);
+  };
+
+  const handleDistributorRewardChange = (value: string) => {
+    setDistributorReward(parseFloat(value) / 100);
+  };
+
+  const handlePriceChange = (value: string) => {
+    setPrice(parseFloat(value));
   };
 
   const handlePaidChange = (value: string) => {
@@ -137,6 +229,10 @@ function Write() {
       const html = markdownConverter.makeHtml(savedPaid);
       setPaid(html);
     }
+    const savedTitle = localStorage.getItem(STORAGE_KEY_TITLE);
+    if (savedTitle) {
+      setTitle(savedTitle);
+    }
   }, []);
 
   return (
@@ -150,10 +246,17 @@ function Write() {
       padding="20px"
       gap="20px"
     >
-      <VStack height="100px" width="100%">
-        <Heading size="2xl">New Article</Heading>
-        <Text>Write good content</Text>
-      </VStack>
+      <Header />
+      <Text
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        height="100px"
+        fontWeight="bold"
+        fontSize="1.5em"
+      >
+        WRITE GOOD CONTENT
+      </Text>
       <Box
         backgroundColor="white"
         height="50px"
@@ -165,7 +268,9 @@ function Write() {
           borderRadius="0px"
           placeholder="Article Title"
           fontSize="2.2em"
+          value={title}
           fontWeight="bold"
+          onChange={handleTitleChange}
         ></Input>
       </Box>
       <Spacer />
@@ -173,7 +278,7 @@ function Write() {
         <Text variant="title">Free Preview</Text>
         <Text>
           A description, subtitle, paragraph... whatever works to make the
-          reader by the rest.
+          reader buy the rest.
         </Text>
       </Box>
       <Box overflow="visible" sx={quillStyle}>
@@ -206,25 +311,33 @@ function Write() {
           border="1px dashed black"
           padding="20px"
           boxShadow="5px 5px 0px 0px black"
+          sx={{
+            transition: "transform 0.2s",
+            "&:hover": {
+              transform: "translate(-2px, -2px)",
+            },
+          }}
         >
           <Heading textAlign="left" variant="title" fontSize="1.5em">
             Revenue Configuration
           </Heading>
           <VStack alignItems="left" width="250px" minWidth="250px">
-            <Text
-              variant="boldTitle"
-              textAlign="left"
-              fontSize="1em"
-              marginTop="20px"
-            >
-              Article Price (ETH)
-            </Text>
-            <BuneInput placehodler="0.01" />
-            <ConfigurationInput
-              defaultValue="5"
-              title="Distributor Share (%)"
+            <ArticlePriceInput
+              defaultValue={DEFAULT_PRICE.toString()}
+              onChange={handlePriceChange}
             />
-            <ConfigurationInput defaultValue="1" title="Network Fee (%)" />
+            <ConfigurationInput
+              labels={["5%", "10%", "15%"]}
+              defaultValue={(DEFAULT_DISTRIBUTOR_REWARD * 100).toString()}
+              title="Distributor Reward"
+              onChange={handleDistributorRewardChange}
+            />
+            <ConfigurationInput
+              labels={["1%", "2%", "5%"]}
+              defaultValue={(DEFAULT_NETWORK_TIP * 100).toString()}
+              title="Network Tip"
+              onChange={handleNetworkTipChange}
+            />
           </VStack>
         </Box>
         <Box
@@ -232,6 +345,12 @@ function Write() {
           border="1px dashed black"
           padding="20px"
           boxShadow="5px 5px 0px 0px black"
+          sx={{
+            transition: "transform 0.2s",
+            "&:hover": {
+              transform: "translate(-2px, -2px)",
+            },
+          }}
         >
           <VStack width="100%" alignItems="left" height="100%">
             <Heading textAlign="left" variant="title" fontSize="1.5em">
@@ -250,25 +369,29 @@ function Write() {
                 </Text>
                 <Spacer />
                 <Text fontFamily="monospace" alignSelf="flex-end">
-                  0.008 ETH
+                  {(
+                    price -
+                    (price * distributorReward + price * networkTip)
+                  ).toFixed(8)}{" "}
+                  ETH
                 </Text>
               </Flex>
               <Flex direction="row">
                 <Text fontFamily="monospace" alignSelf="flex-start">
-                  Distributor Share
+                  Distributor Reward
                 </Text>
                 <Spacer />
                 <Text fontFamily="monospace" alignSelf="flex-end">
-                  0.002 ETH
+                  {(price * distributorReward).toFixed(8)} ETH
                 </Text>
               </Flex>
               <Flex direction="row">
                 <Text fontFamily="monospace" alignSelf="flex-start">
-                  Network Fee
+                  Network Tip
                 </Text>
                 <Spacer />
                 <Text fontFamily="monospace" alignSelf="flex-end">
-                  0.001 ETH
+                  {(price * networkTip).toFixed(8)} ETH
                 </Text>
               </Flex>
             </Box>

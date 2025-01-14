@@ -17,6 +17,7 @@ import { ConnectKitProvider } from "connectkit";
 import { createHashRouter, RouterProvider } from "react-router-dom";
 import Home from "./Home.tsx";
 import Write from "./Write.tsx";
+import Read from "./Read.tsx";
 
 const Button = defineStyleConfig({
   // The styles all button have in common
@@ -69,7 +70,7 @@ const theme = extendTheme({
   colors: customColors,
   fonts: {
     heading: `"Courier New", "monospace"`,
-    body: `"Courier New", "monospace"`,
+    body: `"Courier New Medium", "monospace"`,
   },
   styles: {
     global: {
@@ -102,6 +103,10 @@ const router = createHashRouter([
   {
     path: "/write",
     element: <Write />,
+  },
+  {
+    path: "/read",
+    element: <Read />,
   },
   {
     path: "/articles/:tokenID",

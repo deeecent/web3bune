@@ -28,24 +28,7 @@ import {
   ShareIcon,
 } from "lucide-react";
 import { ComponentType } from "react";
-import { GlitchButton } from "./CustomComponents";
-
-function Header() {
-  return (
-    <HStack width="100%" marginTop="20px">
-      <ConnectButton />
-      <Spacer />
-      <Heading as="h1" size="xl">
-        <Link to="/">web3bune</Link>
-      </Heading>
-      <Spacer />
-      <TrendingUp />
-      <Text marginLeft="20px" marginRight="20px">
-        ETH: 3,450
-      </Text>
-    </HStack>
-  );
-}
+import { GlitchButton, Header } from "./CustomComponents";
 
 function Title() {
   return (
@@ -152,7 +135,10 @@ function HighlightBox({
         ))}
       </Text>
       <Spacer />
-      <GlitchButton label={button} />
+
+      <Link to="/write">
+        <GlitchButton label={button} />
+      </Link>
     </VStack>
   );
 }

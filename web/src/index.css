@@ -117,3 +117,10 @@
     local("SourceSerifProBold"),
     url(./fonts/source-serif-pro/SourceSerifPro-Bold.ttf) format("truetype");
 }
+
+@font-face {
+  font-family: "Courier New Medium";
+  src:
+    local("Courier Medium"),
+    url("./fonts/Courier Medium/Courier Medium.otf") format("truetype");
+}
