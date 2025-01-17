@@ -4,7 +4,9 @@ import {
   Box,
   Flex,
   Heading,
+  HStack,
   Input,
+  SimpleGrid,
   Spacer,
   Text,
   VStack,
@@ -13,6 +15,7 @@ import { GlitchButton, Header, Windows98ButtonGroup } from "./CustomComponents";
 import Markdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import "./markdown.css";
+import ChaoticImageDisplay from "./Ads";
 
 const STORAGE_KEY_TITLE = "TMP_TITLE";
 const STORAGE_KEY_PREVIEW = "TMP_PREVIEW";
@@ -25,14 +28,16 @@ function MintSection({
   distributorReward,
   networkTip,
   gasFee,
-  onClick,
+  onClickMint,
+  onClickNo,
 }: {
   author: string;
   price: string;
   distributorReward: string;
   networkTip: string;
   gasFee: string;
-  onClick: () => any;
+  onClickMint: () => any;
+  onClickNo: () => any;
 }) {
   return (
     <Box
@@ -46,16 +51,55 @@ function MintSection({
         },
       }}
     >
-      <VStack width="100%" alignItems="center" height="100%">
-        <Heading textAlign="left">Make {author} happy</Heading>
-        <Text>Mint to read the rest of the article</Text>
-        <Spacer />
-        <GlitchButton onClick={onClick} label={`Mint - ${price} ETH`} />
-        <Spacer />
-        <Text>
-          Price breakdown: {distributorReward} ETH distributor reward,{" "}
-          {networkTip} ETH protocol tip, {gasFee} ETH gas.
-        </Text>
+      <VStack width="100%" alignItems="left" height="100%">
+        <SimpleGrid columns={2} gap={2}>
+          <VStack border="1px solid black" alignItems="left" padding="20px">
+            <Text fontWeight="bold" fontSize="20px" textAlign="center">
+              Mint to read the rest. Support TimDaub directly.
+            </Text>
+            <GlitchButton onClick={onClickMint} label={`Mint - ${price} ETH`} />
+            <HStack textAlign="center" justifyContent="center" gap="20px">
+              <VStack alignItems="center">
+                <Text>$0.178</Text>
+                <Text>↓</Text>
+                <Text>@timdaub</Text>
+              </VStack>
+              <VStack>
+                <Text>$0.02</Text>
+                <Text>↓</Text>
+                <Text>curator</Text>
+              </VStack>
+              <VStack>
+                <Text>$0.001</Text>
+                <Text>↓</Text>
+                <Text>network</Text>
+              </VStack>
+            </HStack>
+          </VStack>
+          <VStack border="1px solid black" alignItems="left" padding="20px">
+            <Text fontWeight="bold" fontSize="20px" textAlign="center">
+              Mh, I am not convinced. Support the AD industry.
+            </Text>
+            <GlitchButton onClick={onClickNo} label={`I am not paying`} />
+            <HStack textAlign="center" justifyContent="center" gap="20px">
+              <VStack>
+                <Text>nothing</Text>
+                <Text>↓</Text>
+                <Text>@timdaub</Text>
+              </VStack>
+              <VStack>
+                <Text>nothing</Text>
+                <Text>↓</Text>
+                <Text>curator</Text>
+              </VStack>
+              <VStack alignItems="center">
+                <Text>your life</Text>
+                <Text>↓</Text>
+                <Text>Google</Text>
+              </VStack>
+            </HStack>
+          </VStack>
+        </SimpleGrid>
         <Text fontWeight="bold" textAlign="center">
           Once you buy the article, you will own its NFT.
           <br />
@@ -80,6 +124,8 @@ function Read() {
   const [reward, setReward] = useState("0.0002");
   const [tip, setTip] = useState("0.0001");
   const [gas, setGas] = useState("0.0000001");
+
+  const [expectChaos, setExpectChaos] = useState(false);
 
   useEffect(() => {
     const savedPreview = localStorage.getItem(STORAGE_KEY_PREVIEW);
@@ -128,8 +174,13 @@ function Read() {
         alignItems="left"
       >
         <Heading size="3xl">{title}</Heading>
-        <Text variant="title" marginBottom="20px">
-          Written by {author}, {new Date(date).toUTCString()}
+        <Text variant="title" marginBottom="50px">
+          {author} -{" "}
+          {new Date(date * 1000).toLocaleDateString("en-US", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          })}
         </Text>
         <div className="markdown">
           <Markdown
@@ -149,9 +200,14 @@ function Read() {
             </Markdown>
           </div>
         )}
+        <ChaoticImageDisplay activate={expectChaos} />
         {!minted && (
           <MintSection
-            onClick={() => setMinted(true)}
+            onClickMint={() => setMinted(true)}
+            onClickNo={() => {
+              setMinted(true);
+              setExpectChaos(true);
+            }}
             price={price}
             distributorReward={reward}
             networkTip={tip}
