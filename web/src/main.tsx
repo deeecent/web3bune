@@ -10,10 +10,14 @@ import {
   ChakraProvider,
   defineStyleConfig,
   extendTheme,
+  VStack,
 } from "@chakra-ui/react";
 import "./index.css";
 import { ConnectKitProvider } from "connectkit";
 import { createHashRouter, RouterProvider } from "react-router-dom";
+import Home from "./Home.tsx";
+import Write from "./Write.tsx";
+import Read from "./Read.tsx";
 
 const Button = defineStyleConfig({
   // The styles all button have in common
@@ -21,13 +25,11 @@ const Button = defineStyleConfig({
     fontWeight: "bold",
     textTransform: "uppercase",
     borderRadius: "0", // <-- border radius is same for all variants and sizes
-    borderColor: "#000000",
-    borderWidth: "0.5px",
   },
   variants: {
     primary: () => ({
-      color: "black",
-      backgroundColor: "white",
+      color: "white",
+      backgroundColor: "bune.darkGrey",
     }),
     disabled: () => ({
       fontSize: "md",
@@ -44,32 +46,42 @@ const Button = defineStyleConfig({
 const Text = defineStyleConfig({
   // The styles all button have in common
   baseStyle: {
-    fontFamily: `"DMMonoRegular", "Arial", "serif"`,
-    fontSize: "15px",
+    fontFamily: `"Courier New", "monospace"`,
+    fontSize: "1em",
   },
   variants: {
-    bold: () => ({
-      fontFamily: `"DMMonoMedium", "Arial", "serif"`,
-      fontSize: "20px",
+    title: () => ({
+      fontFamily: `"Courier New", "monospace"`,
+      fontWeight: "bold",
+      fontStyle: "italic",
+      fontSize: "1.2em",
     }),
   },
 });
 
+const customColors = {
+  bune: {
+    darkGrey: "rgb(51,51,51)",
+    lightGrey: "rgb(240, 240, 240)",
+  },
+};
+
 const theme = extendTheme({
+  colors: customColors,
   fonts: {
-    heading: `"CloisterBlackHeading", "Arial", "serif"`,
-    body: `"DMMonoRegular", "Arial", "serif"`,
+    heading: `"Courier New", "monospace"`,
+    body: `"Courier New Medium", "monospace"`,
   },
   styles: {
     global: {
       html: {
-        background: "rgb(255, 255, 255)",
+        background: "bune.lightGrey",
       },
       body: {
-        background: "white",
-        color: "rgb(0, 0, 0)",
+        background: "bune.lightGrey",
+        color: "bune.darkGrey",
         textAlign: "center",
-        height: "100vh",
+        minHeight: "100vh",
       },
     },
   },
@@ -86,7 +98,15 @@ const queryClient = new QueryClient();
 const router = createHashRouter([
   {
     path: "/",
-    element: <App />,
+    element: <Home />,
+  },
+  {
+    path: "/write",
+    element: <Write />,
+  },
+  {
+    path: "/read",
+    element: <Read />,
   },
   {
     path: "/articles/:tokenID",
@@ -100,7 +120,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <QueryClientProvider client={queryClient}>
         <ChakraProvider theme={theme}>
           <ConnectKitProvider>
-            <RouterProvider router={router} />
+            <VStack width="70%" maxWidth="1000px" margin="0 auto">
+              <RouterProvider router={router} />
+            </VStack>
           </ConnectKitProvider>
         </ChakraProvider>
       </QueryClientProvider>
