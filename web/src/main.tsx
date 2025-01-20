@@ -70,7 +70,7 @@ const theme = extendTheme({
   colors: customColors,
   fonts: {
     heading: `"Courier New", "monospace"`,
-    body: `"Courier New Medium", "monospace"`,
+    body: `"Courier New", "monospace"`,
   },
   styles: {
     global: {

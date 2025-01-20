@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
+// define your extension array
 import TurndownService from "turndown";
 import {
   Box,
@@ -18,61 +17,11 @@ import {
 import { GlitchButton, Header, Windows98ButtonGroup } from "./CustomComponents";
 import Showdown from "showdown";
 import { EthToUsdConverter } from "./EthConverter";
+import { TiptapEditor, FloatingMenu } from "./Editor";
 
 const STORAGE_KEY_TITLE = "TMP_TITLE";
 const STORAGE_KEY_PREVIEW = "TMP_PREVIEW";
 const STORAGE_KEY_PAID = "TMP_PAID";
-const FONT = `"Courier New Medium", "monospace"`;
-const FONT_BOLD = `"Courier New", "monospace"`;
-
-const quillStyle = {
-  ".quill": {
-    display: "flex",
-    flexDirection: "column",
-    height: "100%",
-    fontFamily: `${FONT}`,
-  },
-  ".ql-container": {
-    minHeight: "150px" /* Initial height */,
-    overflowY: "visible" /* Allow height expansion */,
-    border: "1px solid #bbb",
-    backgroundColor: "white",
-    borderTop: "none",
-  },
-  ".ql-toolbar": {
-    border: "1px solid #bbb",
-    borderRadius: "0 0 0 0",
-  },
-  ".ql-editor": {
-    fontFamily: `${FONT}`,
-    fontSize: "1.4em",
-    lineHeight: "1.6",
-  },
-  ".ql-editor h1": {
-    fontSize: "2.5em",
-    fontFamily: `${FONT_BOLD}`,
-  },
-  ".ql-editor h2": {
-    fontSize: "2.1em",
-    fontWeight: "bold",
-    fontFamily: `${FONT_BOLD}`,
-  },
-  ".ql-editor p": {
-    marginBottom: "1.5em",
-  },
-};
-
-// Custom Toolbar
-const modules = {
-  toolbar: [
-    [{ header: [1, 2, 3, false] }], // Headings (H1, H2, H3)
-    ["bold", "italic", { color: [] }], // Bold, Italic, Text Color
-    [{ align: [] }], // Text Alignment
-    ["blockquote", "code-block"], // Quoting and Code Snippets
-    ["link", "image"], // Insert Media
-    ["clean"], // Remove formatting
-  ],
-};
 
 function ArticlePriceInput({
   defaultValue,
@@ -189,6 +138,12 @@ function Write() {
   const turndownService = new TurndownService();
   const markdownConverter = new Showdown.Converter();
 
+  const [activeEditor, setActiveEditor] = useState<any>(null);
+
+  const handleEditorFocus = (editor: any) => {
+    setActiveEditor(editor);
+  };
+
   const handlePreviewChange = (value: string) => {
     setPreview(value);
     const markdown = turndownService.turndown(value); // Convert HTML to Markdown
@@ -223,6 +178,7 @@ function Write() {
     if (savedPreview) {
       const html = markdownConverter.makeHtml(savedPreview);
       setPreview(html);
+      console.log(html);
     }
     const savedPaid = localStorage.getItem(STORAGE_KEY_PAID);
     if (savedPaid) {
@@ -246,6 +202,11 @@ function Write() {
       padding="20px"
       gap="20px"
     >
+      {activeEditor && (
+        <Box style={styles.menuContainer}>
+          <FloatingMenu editor={activeEditor} />
+        </Box>
+      )}
       <Header />
       <Text
         display="flex"
@@ -281,12 +242,11 @@ function Write() {
           reader buy the rest.
         </Text>
       </Box>
-      <Box overflow="visible" sx={quillStyle}>
-        <ReactQuill
-          value={preview}
-          onChange={handlePreviewChange}
-          modules={modules}
-          placeholder="Start typing here..."
+      <Box>
+        <TiptapEditor
+          onUpdate={handlePreviewChange}
+          onFocus={handleEditorFocus} // Capture editor focus
+          content={preview}
         />
       </Box>
       <Spacer />
@@ -296,15 +256,13 @@ function Write() {
           This will be shown to the reader only after purchasing the article.
         </Text>
       </Box>
-      <Box overflow="visible" sx={quillStyle}>
-        <ReactQuill
-          value={paid}
-          onChange={handlePaidChange}
-          modules={modules}
-          placeholder="Start typing here..."
+      <Box>
+        <TiptapEditor
+          onUpdate={handlePaidChange}
+          onFocus={handleEditorFocus} // Capture editor focus
+          content={paid}
         />
       </Box>
-
       <SimpleGrid minChildWidth="300px" gap="20px">
         <Box
           backgroundColor="bune.lightGrey"
@@ -409,12 +367,43 @@ function Write() {
               </Text>
             </Flex>
             <Spacer />
-            <GlitchButton label="Publish Article" />
+            <GlitchButton onClick={() => {}} label="Publish Article" />
           </VStack>
         </Box>
       </SimpleGrid>
     </Flex>
   );
 }
+
+const styles: { [key: string]: React.CSSProperties } = {
+  pageContainer: {
+    display: "flex",
+    flexDirection: "row",
+    width: "100%",
+    minHeight: "100vh",
+    position: "relative",
+  },
+  menuContainer: {
+    position: "fixed", // Makes the menu fixed
+    top: "50%" /* Move down 50% from the top */,
+    transform: "translateY(-50%)",
+    left: "20px", // Positions it to the left of the content
+    zIndex: 1000,
+    backgroundColor: "#fff",
+    border: "1px solid #ddd",
+    padding: "10px",
+    borderRadius: "8px",
+    boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
+    display: "flex",
+    flexDirection: "column", // Align buttons vertically
+    gap: "10px",
+    width: "max-content", // Only as wide as needed for buttons
+  },
+  mainContent: {
+    flexGrow: 1,
+    marginLeft: "200px", // Adds space for the menu
+    padding: "20px",
+  },
+};
 
 export default Write;
