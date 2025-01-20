@@ -52,7 +52,6 @@ export const BannerImages = [
   "468_messenger_green.gif",
   "AmazonBannerII.gif",
   "MESSENGER.gif",
-  "ad_amazon (1).gif",
   "ad_amazon.gif",
   "altavista-2000.gif",
   "amazon-2000.gif",
