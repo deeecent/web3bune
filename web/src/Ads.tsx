@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { BannerImages } from "./BannerImages";
+import BouncingDVD from "./BouncingDVD";
 
 type Image = {
   animation: string;
@@ -63,6 +64,8 @@ const ChaoticImageDisplay = ({ activate }: { activate: boolean }) => {
       scale: [1, 1.2, 1.5, 1.7][Math.floor(Math.random() * 4)],
     };
 
+    console.log(newImage.x);
+
     setImages((prev) => [...prev, newImage]); // Keep max 15 images
   };
 
@@ -74,7 +77,7 @@ const ChaoticImageDisplay = ({ activate }: { activate: boolean }) => {
   // Add new images periodically
   useEffect(() => {
     if (activate) {
-      const interval = setInterval(addImage, 1000);
+      const interval = setInterval(addImage, 2000);
       return () => clearInterval(interval);
     }
   }, [activate]);
@@ -160,48 +163,39 @@ const ChaoticImageDisplay = ({ activate }: { activate: boolean }) => {
               opacity: 0;
             }
           }
-
-          @keyframes bounce-around {
-            0% {
-              transform: translate(0, 0);
-            }
-            25% {
-              transform: translate(calc(70vw), calc(70vh));
-            }
-            50% {
-              transform: translate(0, calc(70vh));
-            }
-            75% {
-              transform: translate(calc(70vw), 0);
-            }
-            100% {
-              transform: translate(0, 0);
-            }
-          }
         `}
       </style>
 
-      {images.map((img) => (
-        <img
-          key={img.id}
-          src={img.src}
-          alt=""
-          className={`image ${img.size}`}
-          style={{
-            left: `${img.x}px`,
-            top: `${img.y}px`,
-            animation: `${img.animation} ${
-              img.animation === "blink" ? img.blinkRate : img.duration
-            }s ${img.direction} linear infinite`,
-            scale: `${img.scale}`,
-          }}
-          onAnimationIteration={() => {
-            if (Math.random() < 0.3) {
-              removeImage(img.id);
-            }
-          }}
-        />
-      ))}
+      {images.map((img) =>
+        img.animation === "bounce-around" ? (
+          <BouncingDVD
+            startX={img.x}
+            startY={img.y}
+            id={img.id}
+            imageSrc={img.src}
+          />
+        ) : (
+          <img
+            key={img.id}
+            src={img.src}
+            alt=""
+            className={`image ${img.size}`}
+            style={{
+              left: `${img.x}px`,
+              top: `${img.y}px`,
+              animation: `${img.animation} ${
+                img.animation === "blink" ? img.blinkRate : img.duration
+              }s ${img.direction} linear infinite`,
+              scale: `${img.scale}`,
+            }}
+            onAnimationIteration={() => {
+              if (Math.random() < 0.3) {
+                removeImage(img.id);
+              }
+            }}
+          />
+        )
+      )}
     </div>
   );
 };
