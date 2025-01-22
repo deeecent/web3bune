@@ -2023,7 +2023,7 @@ export const web3buneAbi = [
  */
 export const web3buneAddress = {
   10: '0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c',
-  1337: '0xf6018dffAc9B1C63e8f1097148664551CEaEc5A2',
+  1337: '0x3B99cDC122f0ce816b2Ba1A1d035D3490e9126cA',
   11155111: '0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6',
 } as const
 

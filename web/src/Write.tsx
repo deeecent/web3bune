@@ -150,14 +150,23 @@ function Write() {
 
   const [activeEditor, setActiveEditor] = useState<any>(null);
 
-  const { data: hash, writeContract } = useWriteWeb3buneCreatePost();
+  const {
+    data: hash,
+    writeContract,
+    error: submitError,
+  } = useWriteWeb3buneCreatePost();
 
-  const { isLoading: isConfirming } = useWaitForTransactionReceipt({
+  const {
+    isLoading: isConfirming,
+    isSuccess,
+    error: txError,
+  } = useWaitForTransactionReceipt({
     hash,
+    confirmations: 3,
   });
 
   const [jsonData, setJsonData] = useState<string>();
-  const { pending, CID, error } = useUploader(jsonData);
+  const { pending, CID, error: metaError } = useUploader(jsonData);
 
   async function submit() {
     if (
@@ -226,11 +235,45 @@ function Write() {
           CID,
           parseEther(String(price)),
           BigInt(distributorReward * 100),
-          BigInt(500),
+          BigInt(networkTip * 100),
         ],
       });
     }
   }, [CID]);
+
+  useEffect(() => {
+    if (submitError) {
+      toast({
+        title: "Error",
+        description: `Transaction error ${submitError}`,
+        status: "error",
+        duration: 9000,
+        isClosable: true,
+      });
+    }
+
+    if (txError) {
+      toast({
+        title: "Error",
+        description: `Transaction error ${txError}`,
+        status: "error",
+        duration: 9000,
+        isClosable: true,
+      });
+    }
+  }, [submitError, txError]);
+
+  useEffect(() => {
+    if (isSuccess) {
+      toast({
+        title: "Success",
+        description: "Article created",
+        status: "success",
+        duration: 9000,
+        isClosable: true,
+      });
+    }
+  }, [isSuccess]);
 
   const handleEditorFocus = (editor: any) => {
     setActiveEditor(editor);
