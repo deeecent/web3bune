@@ -1,15 +1,16 @@
 import { task } from "hardhat/config";
 
-task("deploy:web3bune", "Deploy Web3bune Contract").setAction(async function (
-  _,
-  { ethers },
-) {
-  const [deployer] = await ethers.getSigners();
-  const web3buneFactory = await ethers.getContractFactory("Web3bune");
-  console.log("Deploying Web3bune");
-  const propcorn = await web3buneFactory
-    .connect(deployer)
-    .deploy(deployer.address, deployer.address);
-  await propcorn.waitForDeployment();
-  console.log("Propcorn deployed to: ", await propcorn.getAddress());
-});
+import { Web3bune } from "../types";
+import { loadContract } from "./utils";
+
+task("list:posts", "List posts")
+  .addPositionalParam("address", "Account")
+  .setAction(async function ({ address }: { address: string }, hre) {
+    const contract = (await loadContract(
+      hre,
+      "Web3bune",
+      "Web3buneModule#Proxy",
+    )) as unknown as Web3bune;
+    console.log(address);
+    console.log(await contract.listPostsByAccount(address, 0));
+  });

@@ -1,8 +1,9 @@
+import "@nomicfoundation/hardhat-ignition-ethers";
 import "@nomicfoundation/hardhat-toolbox";
+import "@openzeppelin/hardhat-upgrades";
 import "hardhat-deploy";
 import type { HardhatUserConfig } from "hardhat/config";
 import { vars } from "hardhat/config";
-import type { NetworkUserConfig } from "hardhat/types";
 
 import "./tasks/accounts";
 import "./tasks/web3bune";

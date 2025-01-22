@@ -1,10 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.9;
 
-import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract Web3bune is ERC1155, Ownable {
+contract Web3bune is
+    Initializable,
+    UUPSUpgradeable,
+    OwnableUpgradeable,
+    ERC1155Upgradeable
+{
     // Errors
     error NonexistentPost();
     error InvalidFee();
@@ -41,23 +48,31 @@ contract Web3bune is ERC1155, Ownable {
 
     uint256 constant PAGE_SIZE = 100;
 
-    Post[] internal _posts;
+    address payable public protocolFeeReceiver;
+    Post[] public posts;
+
     mapping(address => uint256[]) internal _addressToPostIds;
-    address payable internal _protocolFeeReceiver;
 
     modifier postExists(uint256 index) {
-        if (index >= _posts.length) {
+        if (index >= posts.length) {
             revert NonexistentPost();
         }
         _;
     }
 
-    constructor(
-        address initialOwner,
-        address payable protocolFeeReceiver
-    ) ERC1155("") Ownable(initialOwner) {
-        _protocolFeeReceiver = protocolFeeReceiver;
+    function initialize(
+        address payable protocolFeeReceiver_
+    ) public initializer {
+        protocolFeeReceiver = protocolFeeReceiver_;
+        __Ownable_init(msg.sender);
+        __ERC1155_init("");
+        __UUPSUpgradeable_init();
     }
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() initializer {}
+
+    function _authorizeUpgrade(address) internal virtual override onlyOwner {}
 
     function createPost(
         string calldata tokenURI,
@@ -69,7 +84,7 @@ contract Web3bune is ERC1155, Ownable {
             revert InvalidFee();
         }
 
-        _posts.push(
+        posts.push(
             Post(
                 tokenURI,
                 payable(msg.sender),
@@ -78,11 +93,11 @@ contract Web3bune is ERC1155, Ownable {
                 aggFeeBasisPoints
             )
         );
-        _addressToPostIds[msg.sender].push(_posts.length - 1);
+        _addressToPostIds[msg.sender].push(posts.length - 1);
 
         emit PostCreated(
             msg.sender,
-            _posts.length - 1,
+            posts.length - 1,
             tokenURI,
             price,
             feeBasisPoints,
@@ -97,7 +112,7 @@ contract Web3bune is ERC1155, Ownable {
         uint256 feeBasisPoints,
         uint256 aggFeeBasisPoints
     ) public postExists(index) {
-        Post storage post = _posts[index];
+        Post storage post = posts[index];
 
         if (msg.sender != post.author) {
             revert NotOwner();
@@ -136,7 +151,7 @@ contract Web3bune is ERC1155, Ownable {
         uint256 index,
         uint256 amount
     ) public payable postExists(index) {
-        Post memory post = _posts[index];
+        Post memory post = posts[index];
         uint256 total = post.price * amount;
         if (msg.value < total) {
             revert InsufficientFunds();
@@ -149,7 +164,7 @@ contract Web3bune is ERC1155, Ownable {
 
         post.author.transfer(msg.value - protocolFee - aggregatorFee);
         aggregator.transfer(aggregatorFee);
-        _protocolFeeReceiver.transfer(protocolFee);
+        protocolFeeReceiver.transfer(protocolFee);
 
         _mint(account, index, amount, "");
     }
@@ -157,28 +172,19 @@ contract Web3bune is ERC1155, Ownable {
     function uri(
         uint256 id
     ) public view virtual override postExists(id) returns (string memory) {
-        Post memory post = _posts[id];
+        Post memory post = posts[id];
         return post.tokenURI;
-    }
-
-    function getPost(
-        uint256 id
-    ) public view virtual postExists(id) returns (Post memory) {
-        return _posts[id];
     }
 
     function listPostsByAccount(
         address account,
         uint256 page
-    ) public view returns (Post[PAGE_SIZE] memory) {
-        Post[PAGE_SIZE] memory posts;
+    ) public view returns (Post[PAGE_SIZE] memory pagePosts) {
         uint256 offset = page * PAGE_SIZE;
         uint256[] memory postIds = _addressToPostIds[account];
 
         for (uint256 i = 0; i < PAGE_SIZE && i + offset < postIds.length; i++) {
-            posts[i] = _posts[postIds[i + offset]];
+            pagePosts[i] = posts[postIds[i + offset]];
         }
-
-        return posts;
     }
 }
