@@ -86,6 +86,10 @@ const ChaoticImageDisplay = ({ activate }: { activate: boolean }) => {
     //setFilePaths(getFilePaths("./banners"));
   });
 
+  if (!activate) {
+    return null;
+  }
+
   return (
     <div className="container">
       <style>
