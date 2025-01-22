@@ -80,12 +80,15 @@ export function Windows98ButtonGroup({
 export function GlitchButton({
   label,
   onClick = () => {},
+  isLoading,
 }: {
   label: string;
   onClick: () => any;
+  isLoading: boolean;
 }) {
   return (
     <Button
+      isLoading={isLoading}
       onClick={onClick}
       variant="primary"
       sx={{

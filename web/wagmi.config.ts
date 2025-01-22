@@ -10,7 +10,7 @@ export default defineConfig({
       project: "../evm",
       deployments: {
         Web3bune: {
-          1337: "0x2F350A99882d615700CC30650aEbB239fbB22444",
+          1337: "0xf6018dffAc9B1C63e8f1097148664551CEaEc5A2",
           11155111: "0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6",
           10: "0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c",
         },

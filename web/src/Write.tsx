@@ -12,12 +12,18 @@ import {
   SimpleGrid,
   Spacer,
   Text,
+  useToast,
   VStack,
 } from "@chakra-ui/react";
 import { GlitchButton, Header, Windows98ButtonGroup } from "./CustomComponents";
 import Showdown from "showdown";
 import { EthToUsdConverter } from "./EthConverter";
 import { TiptapEditor, FloatingMenu } from "./Editor";
+import { useAccount, useWaitForTransactionReceipt } from "wagmi";
+import { useWriteWeb3buneCreatePost } from "./generated";
+import { strongCipher } from "./utils/cipher";
+import { useUploader } from "./IPFS";
+import { parseEther } from "viem";
 
 const STORAGE_KEY_TITLE = "TMP_TITLE";
 const STORAGE_KEY_PREVIEW = "TMP_PREVIEW";
@@ -122,8 +128,12 @@ function ConfigurationInput({
 
 function Write() {
   const [title, setTitle] = useState<string>();
-  const [preview, setPreview] = useState("");
-  const [paid, setPaid] = useState("");
+  const [freeContent, setFreeContent] = useState("");
+  const [paidContent, setPaidContent] = useState("");
+
+  const account = useAccount();
+
+  const toast = useToast();
 
   const DEFAULT_PRICE = 0.001;
   const DEFAULT_NETWORK_TIP = 0.01;
@@ -140,12 +150,94 @@ function Write() {
 
   const [activeEditor, setActiveEditor] = useState<any>(null);
 
+  const { data: hash, writeContract } = useWriteWeb3buneCreatePost();
+
+  const { isLoading: isConfirming } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  const [jsonData, setJsonData] = useState<string>();
+  const { pending, CID, error } = useUploader(jsonData);
+
+  async function submit() {
+    if (
+      paidContent === undefined ||
+      freeContent === undefined ||
+      title === undefined ||
+      price === undefined
+    ) {
+      const missing = [
+        { value: paidContent, title: "paid content" },
+        { value: freeContent, title: "free contentß" },
+        { value: title, title: "title" },
+        { value: price, title: "price" },
+      ]
+        .filter((x) => x.value === undefined)
+        .map((x) => x.title)
+        .join(", ");
+
+      toast({
+        title: "Missing fields",
+        description: `${missing} are missing`,
+        status: "error",
+        duration: 9000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    const image = `
+    <svg width='100%' height='100%' viewBox='0 0 600 600' xmlns='http://www.w3.org/2000/svg'
+    style='background-color: black; color: white;'>
+    <foreignObject width='100%' height='100%'>
+        <style>
+            div {
+                padding: 20px;
+                font-size: 30px;
+                font-size: 3.5vw;
+            }
+        </style>
+        <div xmlns='http://www.w3.org/1999/xhtml'>
+        ${title}
+        </div>
+    </foreignObject>
+</svg>`;
+
+    const metadata = {
+      title: title,
+      description: freeContent,
+      content: strongCipher(paidContent, 42),
+      image: image,
+      attributes: [
+        {
+          trait_type: "Author",
+          value: account.address,
+        },
+      ],
+    };
+
+    setJsonData(JSON.stringify(metadata));
+  }
+
+  useEffect(() => {
+    if (CID !== undefined) {
+      writeContract({
+        args: [
+          CID,
+          parseEther(String(price)),
+          BigInt(distributorReward * 100),
+          BigInt(500),
+        ],
+      });
+    }
+  }, [CID]);
+
   const handleEditorFocus = (editor: any) => {
     setActiveEditor(editor);
   };
 
   const handlePreviewChange = (value: string) => {
-    setPreview(value);
+    setFreeContent(value);
     const markdown = turndownService.turndown(value); // Convert HTML to Markdown
     localStorage.setItem(STORAGE_KEY_PREVIEW, markdown);
   };
@@ -168,7 +260,7 @@ function Write() {
   };
 
   const handlePaidChange = (value: string) => {
-    setPaid(value);
+    setPaidContent(value);
     const markdown = turndownService.turndown(value); // Convert HTML to Markdown
     localStorage.setItem(STORAGE_KEY_PAID, markdown);
   };
@@ -177,13 +269,12 @@ function Write() {
     const savedPreview = localStorage.getItem(STORAGE_KEY_PREVIEW);
     if (savedPreview) {
       const html = markdownConverter.makeHtml(savedPreview);
-      setPreview(html);
-      console.log(html);
+      setFreeContent(html);
     }
     const savedPaid = localStorage.getItem(STORAGE_KEY_PAID);
     if (savedPaid) {
       const html = markdownConverter.makeHtml(savedPaid);
-      setPaid(html);
+      setPaidContent(html);
     }
     const savedTitle = localStorage.getItem(STORAGE_KEY_TITLE);
     if (savedTitle) {
@@ -246,7 +337,7 @@ function Write() {
         <TiptapEditor
           onUpdate={handlePreviewChange}
           onFocus={handleEditorFocus} // Capture editor focus
-          content={preview}
+          content={freeContent}
         />
       </Box>
       <Spacer />
@@ -260,7 +351,7 @@ function Write() {
         <TiptapEditor
           onUpdate={handlePaidChange}
           onFocus={handleEditorFocus} // Capture editor focus
-          content={paid}
+          content={paidContent}
         />
       </Box>
       <SimpleGrid minChildWidth="300px" gap="20px">
@@ -367,7 +458,11 @@ function Write() {
               </Text>
             </Flex>
             <Spacer />
-            <GlitchButton onClick={() => {}} label="Publish Article" />
+            <GlitchButton
+              isLoading={isConfirming}
+              onClick={submit}
+              label="Publish Article"
+            />
           </VStack>
         </Box>
       </SimpleGrid>

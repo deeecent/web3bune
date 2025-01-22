@@ -24,6 +24,7 @@
     "@tiptap/react": "^2.11.2",
     "@tiptap/starter-kit": "^2.11.2",
     "@types/showdown": "^2.0.6",
+    "arweave": "^1.15.5",
     "axios": "^1.7.9",
     "connectkit": "^1.8.2",
     "framer-motion": "^11.3.28",
