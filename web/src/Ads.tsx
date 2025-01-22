@@ -16,6 +16,7 @@ type Image = {
 };
 
 const ChaoticImageDisplay = ({ activate }: { activate: boolean }) => {
+  const randomStart = Math.floor(Math.random() % BannerImages.length);
   const [images, setImages] = useState<Image[]>([]);
 
   // Generate a random position within viewport bounds
@@ -51,23 +52,28 @@ const ChaoticImageDisplay = ({ activate }: { activate: boolean }) => {
 
   // Add a new image
   const addImage = () => {
+    console.log(images.length);
     if (BannerImages.length === 0) return;
 
     const newImage: Image = {
       id: Date.now().toString(),
       src:
         "./banners/" +
-        BannerImages[Math.floor(Math.random() * BannerImages.length)],
+        BannerImages[(images.length + randomStart) % BannerImages.length],
       ...getRandomPosition(),
       ...getRandomAnimation(),
       size: 100 + Math.random() * 150,
       scale: [1, 1.2, 1.5, 1.7][Math.floor(Math.random() * 4)],
     };
 
-    console.log(newImage.x);
-
-    setImages((prev) => [...prev, newImage]); // Keep max 15 images
+    setImages((prev) => [...prev, newImage]);
   };
+
+  useEffect(() => {
+    if (images.length > 0) {
+      setTimeout(addImage, 1000);
+    }
+  }, [images]);
 
   // Remove an image
   const removeImage = (id: string) => {
@@ -77,8 +83,7 @@ const ChaoticImageDisplay = ({ activate }: { activate: boolean }) => {
   // Add new images periodically
   useEffect(() => {
     if (activate) {
-      const interval = setInterval(addImage, 2000);
-      return () => clearInterval(interval);
+      addImage();
     }
   }, [activate]);
 

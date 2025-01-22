@@ -249,7 +249,7 @@ export function TiptapEditor({
   }
 
   useEffect(() => {
-    if (content) {
+    if (content && editor.getText() === "") {
       editor.chain().setContent(content).run();
     }
   }, [content]);

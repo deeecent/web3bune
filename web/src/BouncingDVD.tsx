@@ -67,13 +67,7 @@ const BouncingDVD = ({
         if (containerRef.current) {
           const containerWidth = containerRef.current.clientWidth;
           const containerHeight = containerRef.current.clientHeight;
-          console.log(
-            position,
-            containerHeight,
-            containerWidth,
-            naturalHeight,
-            naturalWidth
-          );
+
           setPosition((prev) => ({
             x: Math.min(prev.x, containerWidth - naturalWidth),
             y: Math.min(prev.y, containerHeight - naturalHeight),
@@ -166,19 +160,6 @@ const BouncingDVD = ({
         }
 
         // Ensure position stays within bounds
-
-        console.log(
-          id,
-          position,
-          Math.max(
-            0,
-            Math.min(newPos.x, dimensions.width - imageDimensions.width)
-          ),
-          Math.max(
-            0,
-            Math.min(newPos.y, dimensions.height - imageDimensions.height)
-          )
-        );
 
         return {
           x: Math.max(
