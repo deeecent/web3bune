@@ -1,17 +1,27 @@
 import { useEffect, useState } from "react";
 // define your extension array
 import TurndownService from "turndown";
+import ProgressBar from "@ramonak/react-progress-bar";
 import {
   Box,
+  Button,
   Flex,
   Heading,
   HStack,
   Input,
   InputGroup,
   InputRightElement,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
   SimpleGrid,
   Spacer,
   Text,
+  useDisclosure,
   useToast,
   VStack,
 } from "@chakra-ui/react";
@@ -19,11 +29,22 @@ import { GlitchButton, Header, Windows98ButtonGroup } from "./CustomComponents";
 import Showdown from "showdown";
 import { EthToUsdConverter } from "./EthConverter";
 import { TiptapEditor, FloatingMenu } from "./Editor";
-import { useAccount, useWaitForTransactionReceipt } from "wagmi";
-import { useWriteWeb3buneCreatePost } from "./generated";
+import {
+  useAccount,
+  useTransactionConfirmations,
+  useWaitForTransactionReceipt,
+  useWatchContractEvent,
+} from "wagmi";
+import {
+  useWriteWeb3buneCreatePost,
+  web3buneAbi,
+  web3buneAddress,
+} from "./generated";
 import { strongCipher } from "./utils/cipher";
 import { useUploader } from "./IPFS";
 import { parseEther } from "viem";
+import { useEnvChainId } from "./env";
+import { Link, useNavigate } from "react-router-dom";
 
 const STORAGE_KEY_TITLE = "TMP_TITLE";
 const STORAGE_KEY_PREVIEW = "TMP_PREVIEW";
@@ -126,29 +147,43 @@ function ConfigurationInput({
   );
 }
 
-function Write() {
-  const [title, setTitle] = useState<string>();
-  const [freeContent, setFreeContent] = useState("");
-  const [paidContent, setPaidContent] = useState("");
+type SubmissionData = {
+  title: string;
+  paidContent: string;
+  freeContent: string;
+  price: number;
+  distributorReward: number;
+  networkTip: number;
+};
 
+function SubmissionHandler({ data }: { data: SubmissionData }) {
+  const TOTAL_CONFIRMATIONS = 3;
+
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
+  const chainId = useEnvChainId();
   const account = useAccount();
-
   const toast = useToast();
 
-  const DEFAULT_PRICE = 0.001;
-  const DEFAULT_NETWORK_TIP = 0.01;
-  const DEFAULT_DISTRIBUTOR_REWARD = 0.1;
+  const navigate = useNavigate();
 
-  const [price, setPrice] = useState(DEFAULT_PRICE);
-  const [networkTip, setNetworkTip] = useState(DEFAULT_NETWORK_TIP);
-  const [distributorReward, setDistributorReward] = useState(
-    DEFAULT_DISTRIBUTOR_REWARD
-  );
+  const [jsonData, setJsonData] = useState<string>();
+  const { pending, CID, error: metaError } = useUploader(jsonData);
+  const [sentence, setSentence] = useState("");
+  const [articleId, setArticleId] = useState<bigint>();
 
-  const turndownService = new TurndownService();
-  const markdownConverter = new Showdown.Converter();
+  const [progress, setProgress] = useState(0);
 
-  const [activeEditor, setActiveEditor] = useState<any>(null);
+  useWatchContractEvent({
+    address: web3buneAddress[chainId],
+    abi: web3buneAbi,
+    eventName: "PostCreated",
+    chainId: chainId,
+    args: { from: account.address },
+    onLogs: (logs) => {
+      setArticleId(logs[0].args.index);
+    },
+  });
 
   const {
     data: hash,
@@ -162,24 +197,29 @@ function Write() {
     error: txError,
   } = useWaitForTransactionReceipt({
     hash,
-    confirmations: 3,
+    confirmations: TOTAL_CONFIRMATIONS,
   });
 
-  const [jsonData, setJsonData] = useState<string>();
-  const { pending, CID, error: metaError } = useUploader(jsonData);
+  const { data: confirmationsData } = useTransactionConfirmations({
+    chainId,
+    hash,
+    query: {
+      refetchInterval: 1,
+    },
+  });
 
   async function submit() {
     if (
-      paidContent === undefined ||
-      freeContent === undefined ||
-      title === undefined ||
-      price === undefined
+      data.paidContent === undefined ||
+      data.freeContent === undefined ||
+      data.title === undefined ||
+      data.price === undefined
     ) {
       const missing = [
-        { value: paidContent, title: "paid content" },
-        { value: freeContent, title: "free contentß" },
-        { value: title, title: "title" },
-        { value: price, title: "price" },
+        { value: data.paidContent, title: "paid content" },
+        { value: data.freeContent, title: "free contentß" },
+        { value: data.title, title: "title" },
+        { value: data.price, title: "price" },
       ]
         .filter((x) => x.value === undefined)
         .map((x) => x.title)
@@ -194,7 +234,8 @@ function Write() {
       });
       return;
     }
-
+    setSentence("Uploading article to decentralized storage....");
+    onOpen();
     const image = `
     <svg width='100%' height='100%' viewBox='0 0 600 600' xmlns='http://www.w3.org/2000/svg'
     style='background-color: black; color: white;'>
@@ -207,15 +248,15 @@ function Write() {
             }
         </style>
         <div xmlns='http://www.w3.org/1999/xhtml'>
-        ${title}
+        ${data.title}
         </div>
     </foreignObject>
 </svg>`;
 
     const metadata = {
-      title: title,
-      description: freeContent,
-      content: strongCipher(paidContent, 42),
+      title: data.title,
+      description: data.freeContent,
+      content: strongCipher(data.paidContent, 42),
       image: image,
       attributes: [
         {
@@ -229,13 +270,24 @@ function Write() {
   }
 
   useEffect(() => {
+    console.log(confirmationsData);
+    if (Number(confirmationsData) === TOTAL_CONFIRMATIONS) {
+      navigate(`/read/${articleId}`);
+    } else if (Number(confirmationsData) > 0)
+      setProgress((100 / 4) * (1 + Number(confirmationsData)));
+  }, [confirmationsData]);
+
+  useEffect(() => {
     if (CID !== undefined) {
+      setProgress(25);
+      setSentence("Waiting for transaction confirmation...");
       writeContract({
+        chainId,
         args: [
           CID,
-          parseEther(String(price)),
-          BigInt(distributorReward * 100),
-          BigInt(networkTip * 100),
+          parseEther(String(data.price)),
+          BigInt(data.distributorReward * 100),
+          BigInt(data.networkTip * 100),
         ],
       });
     }
@@ -274,6 +326,81 @@ function Write() {
       });
     }
   }, [isSuccess]);
+
+  return (
+    <Box width="100%">
+      <GlitchButton
+        isLoading={isConfirming}
+        onClick={submit}
+        label="Publish Article"
+      />
+      {isSuccess === false && (
+        <Modal isOpen={isOpen} onClose={onClose}>
+          <ModalOverlay />
+          <ModalContent padding="20px">
+            <ModalHeader>Uploading...</ModalHeader>
+            <ProgressBar
+              completed={progress}
+              baseBgColor="rgb(240, 240, 240)"
+              bgColor="rgb(51,51,51)"
+              borderRadius="0px"
+              labelColor="white"
+              margin="0 auto"
+              width="80%"
+            />
+            <ModalCloseButton />
+            <ModalBody>{sentence}</ModalBody>
+          </ModalContent>
+        </Modal>
+      )}
+      {isSuccess && (
+        <Modal isOpen={isOpen} onClose={onClose}>
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>Success!</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+              You will be automatically redirected to your article. If not,
+              check your{" "}
+              <Link
+                style={{ textDecoration: "underline" }}
+                to={`/authors/${account}`}
+              >
+                author page
+              </Link>
+            </ModalBody>
+
+            <ModalFooter>
+              <Button variant="primary" mr={3} onClick={onClose}>
+                Close
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      )}
+    </Box>
+  );
+}
+
+function Write() {
+  const [title, setTitle] = useState("");
+  const [freeContent, setFreeContent] = useState("");
+  const [paidContent, setPaidContent] = useState("");
+
+  const DEFAULT_PRICE = 0.001;
+  const DEFAULT_NETWORK_TIP = 0.01;
+  const DEFAULT_DISTRIBUTOR_REWARD = 0.1;
+
+  const [price, setPrice] = useState(DEFAULT_PRICE);
+  const [networkTip, setNetworkTip] = useState(DEFAULT_NETWORK_TIP);
+  const [distributorReward, setDistributorReward] = useState(
+    DEFAULT_DISTRIBUTOR_REWARD
+  );
+
+  const turndownService = new TurndownService();
+  const markdownConverter = new Showdown.Converter();
+
+  const [activeEditor, setActiveEditor] = useState<any>(null);
 
   const handleEditorFocus = (editor: any) => {
     setActiveEditor(editor);
@@ -501,10 +628,15 @@ function Write() {
               </Text>
             </Flex>
             <Spacer />
-            <GlitchButton
-              isLoading={isConfirming}
-              onClick={submit}
-              label="Publish Article"
+            <SubmissionHandler
+              data={{
+                title,
+                paidContent,
+                freeContent,
+                distributorReward,
+                networkTip,
+                price,
+              }}
             />
           </VStack>
         </Box>
@@ -525,6 +657,21 @@ const styles: { [key: string]: React.CSSProperties } = {
     position: "fixed", // Makes the menu fixed
     top: "50%" /* Move down 50% from the top */,
     transform: "translateY(-50%)",
+    left: "20px", // Positions it to the left of the content
+    zIndex: 1000,
+    backgroundColor: "#fff",
+    border: "1px solid #ddd",
+    padding: "10px",
+    borderRadius: "8px",
+    boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
+    display: "flex",
+    flexDirection: "column", // Align buttons vertically
+    gap: "10px",
+    width: "max-content", // Only as wide as needed for buttons
+  },
+  menuContainerMobile: {
+    position: "fixed", // Makes the menu fixed
+    top: "40px" /* Move down 50% from the top */,
     left: "20px", // Positions it to the left of the content
     zIndex: 1000,
     backgroundColor: "#fff",

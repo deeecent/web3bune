@@ -16,6 +16,7 @@ import Markdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import "./markdown.css";
 import ChaoticImageDisplay from "./Ads";
+import { useParams } from "react-router-dom";
 
 const STORAGE_KEY_TITLE = "TMP_TITLE";
 const STORAGE_KEY_PREVIEW = "TMP_PREVIEW";
@@ -57,7 +58,11 @@ function MintSection({
             <Text fontWeight="bold" fontSize="20px" textAlign="center">
               Mint to read the rest. Support TimDaub directly.
             </Text>
-            <GlitchButton onClick={onClickMint} label={`Mint - ${price} ETH`} />
+            <GlitchButton
+              isLoading={false}
+              onClick={onClickMint}
+              label={`Mint - ${price} ETH`}
+            />
             <HStack textAlign="center" justifyContent="center" gap="20px">
               <VStack alignItems="center">
                 <Text>$0.178</Text>
@@ -80,7 +85,11 @@ function MintSection({
             <Text fontWeight="bold" fontSize="20px" textAlign="center">
               Mh, I am not convinced. Support the AD industry.
             </Text>
-            <GlitchButton onClick={onClickNo} label={`I am not paying`} />
+            <GlitchButton
+              isLoading={false}
+              onClick={onClickNo}
+              label={`I am not paying`}
+            />
             <HStack textAlign="center" justifyContent="center" gap="20px">
               <VStack>
                 <Text>nothing</Text>
@@ -112,6 +121,8 @@ function MintSection({
 }
 
 function Read() {
+  const { articleId } = useParams<Record<"articleId", string>>();
+
   const [preview, setPreview] = useState("");
   const [paid, setPaid] = useState("");
   const [title, setTitle] = useState("");

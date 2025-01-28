@@ -105,7 +105,7 @@ const router = createHashRouter([
     element: <Write />,
   },
   {
-    path: "/read",
+    path: "/read/:articleId",
     element: <Read />,
   },
   {
