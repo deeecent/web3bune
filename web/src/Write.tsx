@@ -1,17 +1,27 @@
 import { useEffect, useState } from "react";
 // define your extension array
 import TurndownService from "turndown";
+import ProgressBar from "@ramonak/react-progress-bar";
 import {
   Box,
+  Button,
   Flex,
   Heading,
   HStack,
   Input,
   InputGroup,
   InputRightElement,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
   SimpleGrid,
   Spacer,
   Text,
+  useDisclosure,
   useToast,
   VStack,
 } from "@chakra-ui/react";
@@ -19,11 +29,22 @@ import { GlitchButton, Header, Windows98ButtonGroup } from "./CustomComponents";
 import Showdown from "showdown";
 import { EthToUsdConverter } from "./EthConverter";
 import { TiptapEditor, FloatingMenu } from "./Editor";
-import { useAccount, useWaitForTransactionReceipt } from "wagmi";
-import { useWriteWeb3buneCreatePost } from "./generated";
+import {
+  useAccount,
+  useTransactionConfirmations,
+  useWaitForTransactionReceipt,
+  useWatchContractEvent,
+} from "wagmi";
+import {
+  useWriteWeb3buneCreatePost,
+  web3buneAbi,
+  web3buneAddress,
+} from "./generated";
 import { strongCipher } from "./utils/cipher";
 import { useUploader } from "./IPFS";
 import { parseEther } from "viem";
+import { useEnvChainId } from "./env";
+import { Link, useNavigate } from "react-router-dom";
 
 const STORAGE_KEY_TITLE = "TMP_TITLE";
 const STORAGE_KEY_PREVIEW = "TMP_PREVIEW";
@@ -126,14 +147,245 @@ function ConfigurationInput({
   );
 }
 
+type SubmissionData = {
+  title: string;
+  paidContent: string;
+  freeContent: string;
+  price: number;
+  distributorReward: number;
+  networkTip: number;
+};
+
+function SubmissionHandler({ data }: { data: SubmissionData }) {
+  const TOTAL_CONFIRMATIONS = 3;
+
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
+  const chainId = useEnvChainId();
+  const account = useAccount();
+  const toast = useToast();
+
+  const navigate = useNavigate();
+
+  const [jsonData, setJsonData] = useState<string>();
+  const { pending, CID, error: metaError } = useUploader(jsonData);
+  const [sentence, setSentence] = useState("");
+  const [articleId, setArticleId] = useState<bigint>();
+
+  const [progress, setProgress] = useState(0);
+
+  useWatchContractEvent({
+    address: web3buneAddress[chainId],
+    abi: web3buneAbi,
+    eventName: "PostCreated",
+    chainId: chainId,
+    args: { from: account.address },
+    onLogs: (logs) => {
+      setArticleId(logs[0].args.index);
+    },
+  });
+
+  const {
+    data: hash,
+    writeContract,
+    error: submitError,
+  } = useWriteWeb3buneCreatePost();
+
+  const {
+    isLoading: isConfirming,
+    isSuccess,
+    error: txError,
+  } = useWaitForTransactionReceipt({
+    hash,
+    confirmations: TOTAL_CONFIRMATIONS,
+  });
+
+  const { data: confirmationsData } = useTransactionConfirmations({
+    chainId,
+    hash,
+    query: {
+      refetchInterval: 1,
+    },
+  });
+
+  async function submit() {
+    if (
+      data.paidContent === undefined ||
+      data.freeContent === undefined ||
+      data.title === undefined ||
+      data.price === undefined
+    ) {
+      const missing = [
+        { value: data.paidContent, title: "paid content" },
+        { value: data.freeContent, title: "free contentß" },
+        { value: data.title, title: "title" },
+        { value: data.price, title: "price" },
+      ]
+        .filter((x) => x.value === undefined)
+        .map((x) => x.title)
+        .join(", ");
+
+      toast({
+        title: "Missing fields",
+        description: `${missing} are missing`,
+        status: "error",
+        duration: 9000,
+        isClosable: true,
+      });
+      return;
+    }
+    setSentence("Uploading article to decentralized storage....");
+    onOpen();
+    const image = `
+    <svg width='100%' height='100%' viewBox='0 0 600 600' xmlns='http://www.w3.org/2000/svg'
+    style='background-color: black; color: white;'>
+    <foreignObject width='100%' height='100%'>
+        <style>
+            div {
+                padding: 20px;
+                font-size: 30px;
+                font-size: 3.5vw;
+            }
+        </style>
+        <div xmlns='http://www.w3.org/1999/xhtml'>
+        ${data.title}
+        </div>
+    </foreignObject>
+</svg>`;
+
+    const metadata = {
+      title: data.title,
+      description: data.freeContent,
+      content: strongCipher(data.paidContent, 42),
+      image: image,
+      attributes: [
+        {
+          trait_type: "Author",
+          value: account.address,
+        },
+      ],
+    };
+
+    setJsonData(JSON.stringify(metadata));
+  }
+
+  useEffect(() => {
+    console.log(confirmationsData);
+    if (Number(confirmationsData) === TOTAL_CONFIRMATIONS) {
+      navigate(`/read/${articleId}`);
+    } else if (Number(confirmationsData) > 0)
+      setProgress((100 / 4) * (1 + Number(confirmationsData)));
+  }, [confirmationsData]);
+
+  useEffect(() => {
+    if (CID !== undefined) {
+      setProgress(25);
+      setSentence("Waiting for transaction confirmation...");
+      writeContract({
+        chainId,
+        args: [
+          CID,
+          parseEther(String(data.price)),
+          BigInt(data.distributorReward * 100),
+          BigInt(data.networkTip * 100),
+        ],
+      });
+    }
+  }, [CID]);
+
+  useEffect(() => {
+    if (submitError) {
+      toast({
+        title: "Error",
+        description: `Transaction error ${submitError}`,
+        status: "error",
+        duration: 9000,
+        isClosable: true,
+      });
+    }
+
+    if (txError) {
+      toast({
+        title: "Error",
+        description: `Transaction error ${txError}`,
+        status: "error",
+        duration: 9000,
+        isClosable: true,
+      });
+    }
+  }, [submitError, txError]);
+
+  useEffect(() => {
+    if (isSuccess) {
+      toast({
+        title: "Success",
+        description: "Article created",
+        status: "success",
+        duration: 9000,
+        isClosable: true,
+      });
+    }
+  }, [isSuccess]);
+
+  return (
+    <Box width="100%">
+      <GlitchButton
+        isLoading={isConfirming}
+        onClick={submit}
+        label="Publish Article"
+      />
+      {isSuccess === false && (
+        <Modal isOpen={isOpen} onClose={onClose}>
+          <ModalOverlay />
+          <ModalContent padding="20px">
+            <ModalHeader>Uploading...</ModalHeader>
+            <ProgressBar
+              completed={progress}
+              baseBgColor="rgb(240, 240, 240)"
+              bgColor="rgb(51,51,51)"
+              borderRadius="0px"
+              labelColor="white"
+              margin="0 auto"
+              width="80%"
+            />
+            <ModalCloseButton />
+            <ModalBody>{sentence}</ModalBody>
+          </ModalContent>
+        </Modal>
+      )}
+      {isSuccess && (
+        <Modal isOpen={isOpen} onClose={onClose}>
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>Success!</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+              You will be automatically redirected to your article. If not,
+              check your{" "}
+              <Link
+                style={{ textDecoration: "underline" }}
+                to={`/authors/${account}`}
+              >
+                author page
+              </Link>
+            </ModalBody>
+
+            <ModalFooter>
+              <Button variant="primary" mr={3} onClick={onClose}>
+                Close
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      )}
+    </Box>
+  );
+}
+
 function Write() {
-  const [title, setTitle] = useState<string>();
+  const [title, setTitle] = useState("");
   const [freeContent, setFreeContent] = useState("");
   const [paidContent, setPaidContent] = useState("");
-
-  const account = useAccount();
-
-  const toast = useToast();
 
   const DEFAULT_PRICE = 0.001;
   const DEFAULT_NETWORK_TIP = 0.01;
@@ -149,88 +401,6 @@ function Write() {
   const markdownConverter = new Showdown.Converter();
 
   const [activeEditor, setActiveEditor] = useState<any>(null);
-
-  const { data: hash, writeContract } = useWriteWeb3buneCreatePost();
-
-  const { isLoading: isConfirming } = useWaitForTransactionReceipt({
-    hash,
-  });
-
-  const [jsonData, setJsonData] = useState<string>();
-  const { pending, CID, error } = useUploader(jsonData);
-
-  async function submit() {
-    if (
-      paidContent === undefined ||
-      freeContent === undefined ||
-      title === undefined ||
-      price === undefined
-    ) {
-      const missing = [
-        { value: paidContent, title: "paid content" },
-        { value: freeContent, title: "free contentß" },
-        { value: title, title: "title" },
-        { value: price, title: "price" },
-      ]
-        .filter((x) => x.value === undefined)
-        .map((x) => x.title)
-        .join(", ");
-
-      toast({
-        title: "Missing fields",
-        description: `${missing} are missing`,
-        status: "error",
-        duration: 9000,
-        isClosable: true,
-      });
-      return;
-    }
-
-    const image = `
-    <svg width='100%' height='100%' viewBox='0 0 600 600' xmlns='http://www.w3.org/2000/svg'
-    style='background-color: black; color: white;'>
-    <foreignObject width='100%' height='100%'>
-        <style>
-            div {
-                padding: 20px;
-                font-size: 30px;
-                font-size: 3.5vw;
-            }
-        </style>
-        <div xmlns='http://www.w3.org/1999/xhtml'>
-        ${title}
-        </div>
-    </foreignObject>
-</svg>`;
-
-    const metadata = {
-      title: title,
-      description: freeContent,
-      content: strongCipher(paidContent, 42),
-      image: image,
-      attributes: [
-        {
-          trait_type: "Author",
-          value: account.address,
-        },
-      ],
-    };
-
-    setJsonData(JSON.stringify(metadata));
-  }
-
-  useEffect(() => {
-    if (CID !== undefined) {
-      writeContract({
-        args: [
-          CID,
-          parseEther(String(price)),
-          BigInt(distributorReward * 100),
-          BigInt(500),
-        ],
-      });
-    }
-  }, [CID]);
 
   const handleEditorFocus = (editor: any) => {
     setActiveEditor(editor);
@@ -458,10 +628,15 @@ function Write() {
               </Text>
             </Flex>
             <Spacer />
-            <GlitchButton
-              isLoading={isConfirming}
-              onClick={submit}
-              label="Publish Article"
+            <SubmissionHandler
+              data={{
+                title,
+                paidContent,
+                freeContent,
+                distributorReward,
+                networkTip,
+                price,
+              }}
             />
           </VStack>
         </Box>
@@ -482,6 +657,21 @@ const styles: { [key: string]: React.CSSProperties } = {
     position: "fixed", // Makes the menu fixed
     top: "50%" /* Move down 50% from the top */,
     transform: "translateY(-50%)",
+    left: "20px", // Positions it to the left of the content
+    zIndex: 1000,
+    backgroundColor: "#fff",
+    border: "1px solid #ddd",
+    padding: "10px",
+    borderRadius: "8px",
+    boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
+    display: "flex",
+    flexDirection: "column", // Align buttons vertically
+    gap: "10px",
+    width: "max-content", // Only as wide as needed for buttons
+  },
+  menuContainerMobile: {
+    position: "fixed", // Makes the menu fixed
+    top: "40px" /* Move down 50% from the top */,
     left: "20px", // Positions it to the left of the content
     zIndex: 1000,
     backgroundColor: "#fff",
