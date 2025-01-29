@@ -6,6 +6,7 @@ import { ethers } from "hardhat";
 
 import { Web3bune } from "../../types";
 import { deployWeb3buneFixture } from "./Web3bune.fixture";
+import { getEVMTimestamp } from "./evm";
 
 describe("Web3bune", function () {
   let web3bune: Web3bune;
@@ -49,7 +50,7 @@ describe("Web3bune", function () {
       ).revertedWithCustomError(web3bune, "InvalidFee");
     });
 
-    it("should create a proposal and emit an event", async () => {
+    it("should create a post and emit an event", async () => {
       await expect(
         web3bune
           .connect(bob)
@@ -64,6 +65,21 @@ describe("Web3bune", function () {
           feeBasisPoints,
           aggFeeBasisPoints,
         );
+    });
+
+    it("should create a post with the given data", async () => {
+      await web3bune
+        .connect(bob)
+        .createPost(tokenURI, price, feeBasisPoints, aggFeeBasisPoints);
+
+      const timestamp = await getEVMTimestamp();
+      const p = await web3bune.posts(0);
+      expect(p.tokenURI).equal(tokenURI);
+      expect(p.price).equal(price);
+      expect(p.feeBasisPoints).equal(feeBasisPoints);
+      expect(p.aggFeeBasisPoints).equal(aggFeeBasisPoints);
+      expect(p.createdAt).equal(timestamp);
+      expect(p.updatedAt).equal(timestamp);
     });
 
     it("should increment the index on every new submission by the same user", async () => {
@@ -151,11 +167,27 @@ describe("Web3bune", function () {
           newFeeBasisPoints,
           newAggFeeBasisPoints,
         );
-      const p = await web3bune.getPost(0);
+      const p = await web3bune.posts(0);
       expect(p.tokenURI).equal(newTokenURI);
       expect(p.price).equal(newPrice);
       expect(p.feeBasisPoints).equal(newFeeBasisPoints);
       expect(p.aggFeeBasisPoints).equal(newAggFeeBasisPoints);
+    });
+
+    it("should update timestamp", async () => {
+      await web3bune
+        .connect(bob)
+        .updatePost(
+          0,
+          newTokenURI,
+          newPrice,
+          newFeeBasisPoints,
+          newAggFeeBasisPoints,
+        );
+
+      const timestamp = await getEVMTimestamp();
+      const p = await web3bune.posts(0);
+      expect(p.updatedAt).equal(timestamp);
     });
   });
 
@@ -214,29 +246,6 @@ describe("Web3bune", function () {
           aggregatorFee,
         ],
       );
-    });
-  });
-
-  describe("getPost", function () {
-    beforeEach(async () => {
-      ({ web3bune } = await loadFixture(deployWeb3buneFixture));
-      await web3bune
-        .connect(bob)
-        .createPost(tokenURI, price, feeBasisPoints, aggFeeBasisPoints);
-    });
-
-    it("should fail if the post doesn't exist", async () => {
-      await expect(web3bune.getPost(1)).revertedWithCustomError(
-        web3bune,
-        "NonexistentPost",
-      );
-    });
-
-    it("should return the post data on valid id", async () => {
-      const p = await web3bune.getPost(0);
-      expect(p.tokenURI).equal(tokenURI);
-      expect(p.price).equal(price);
-      expect(p.feeBasisPoints).equal(feeBasisPoints);
     });
   });
 

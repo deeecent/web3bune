@@ -25,6 +25,8 @@ contract Web3bune is
         uint256 price;
         uint256 feeBasisPoints;
         uint256 aggFeeBasisPoints;
+        uint256 createdAt;
+        uint256 updatedAt;
     }
 
     // Events
@@ -90,7 +92,9 @@ contract Web3bune is
                 payable(msg.sender),
                 price,
                 feeBasisPoints,
-                aggFeeBasisPoints
+                aggFeeBasisPoints,
+                block.timestamp,
+                block.timestamp
             )
         );
         _addressToPostIds[msg.sender].push(posts.length - 1);
@@ -126,6 +130,7 @@ contract Web3bune is
         post.price = price;
         post.feeBasisPoints = feeBasisPoints;
         post.aggFeeBasisPoints = aggFeeBasisPoints;
+        post.updatedAt = block.timestamp;
 
         emit PostUpdated(
             msg.sender,
