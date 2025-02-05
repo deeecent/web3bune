@@ -18,8 +18,12 @@
   margin-bottom: 1.5em;
 }
 
+.markdown strong {
+  font-weight: bold;
+}
+
 .markdown {
-  font-family: "Courier New Medium", Courier, monospace;
+  font-family: "Courier New", Courier, monospace;
   font-size: 1.2em;
 }
 

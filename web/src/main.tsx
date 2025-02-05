@@ -4,7 +4,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { WagmiProvider } from "wagmi";
 
-import App from "./App.tsx";
+import "./markdown.css";
 import { config } from "./wagmi.ts";
 import {
   ChakraProvider,
@@ -18,6 +18,7 @@ import { createHashRouter, RouterProvider } from "react-router-dom";
 import Home from "./Home.tsx";
 import Write from "./Write.tsx";
 import Read from "./Read.tsx";
+import Manifesto from "./Manifesto.tsx";
 
 const Button = defineStyleConfig({
   // The styles all button have in common
@@ -101,16 +102,16 @@ const router = createHashRouter([
     element: <Home />,
   },
   {
+    path: "/manifesto",
+    element: <Manifesto />,
+  },
+  {
     path: "/write",
     element: <Write />,
   },
   {
     path: "/read/:articleId",
     element: <Read />,
-  },
-  {
-    path: "/articles/:tokenID",
-    element: <App />,
   },
 ]);
 

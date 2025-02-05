@@ -1,14 +1,6 @@
-import {
-  Box,
-  Button,
-  Heading,
-  HStack,
-  Input,
-  Spacer,
-  Text,
-} from "@chakra-ui/react";
+import { Button, Heading, HStack, Input, Spacer, Text } from "@chakra-ui/react";
 import ConnectButton from "./ConnectButton";
-import { Link, NavLink } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { TrendingUp } from "lucide-react";
 import { EthToUsdConverter } from "./EthConverter";
 import { parseEther } from "viem";

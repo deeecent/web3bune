@@ -12,7 +12,6 @@ import {
 import { GlitchButton, Header } from "./CustomComponents";
 import Markdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
-import "./markdown.css";
 import ChaoticImageDisplay from "./Ads";
 import { useParams } from "react-router-dom";
 import { useReadWeb3bunePosts } from "./generated";
@@ -167,11 +166,11 @@ function Read() {
 
   const { data: post } = useReadWeb3bunePosts({
     args: [BigInt(articleId !== undefined ? articleId : 0)],
-    query: { enabled: articleId !== undefined },
+    query: { enabled: articleId !== undefined && parseInt(articleId) > 0 },
   });
 
   useEffect(() => {
-    if (articleId === "test") {
+    if (articleId === "0") {
       setAuthor("@timdaub");
       setPrice(parseEther("0.01"));
       setDistributorReward(BigInt(10));

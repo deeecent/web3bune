@@ -1,10 +1,10 @@
 /* TiptapEditor.css */
 .tiptap-editor-container {
-    position: relative;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-  }
-  
+  position: relative;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
 .tiptap-editor-content {
   min-height: 150px;
   padding: 1rem;
@@ -16,7 +16,6 @@
 
 /* Make sure the content div grows with content */
 
-
 .tiptap {
   padding: 20px;
   min-height: 150px;
@@ -27,7 +26,8 @@
   }
 
   /* List styles */
-  ul, ol {
+  ul,
+  ol {
     padding: 0 1rem;
     margin: 1.25rem 1rem 1.25rem 0.4rem;
 
@@ -51,7 +51,6 @@
     font-size: var(--chakra-fontSizes-xl);
     font-weight: bold;
   }
-  
 
   blockquote {
     background: #f9f9f9;
@@ -73,7 +72,6 @@
   }
 }
 
-
 strong {
-  font-weight: "bold";
+  font-weight: bold;
 }
