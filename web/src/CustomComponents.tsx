@@ -11,6 +11,7 @@ import ConnectButton from "./ConnectButton";
 import { Link, NavLink } from "react-router-dom";
 import { TrendingUp } from "lucide-react";
 import { EthToUsdConverter } from "./EthConverter";
+import { parseEther } from "viem";
 
 export function BuneInput({
   placehodler = "",
@@ -118,7 +119,7 @@ export function Header() {
       <TrendingUp />
       <HStack marginLeft="20px" marginRight="20px">
         <Text>ETH </Text>
-        <EthToUsdConverter ethValue={1} />
+        <EthToUsdConverter ethValue={parseEther("1")} />
       </HStack>
     </HStack>
   );

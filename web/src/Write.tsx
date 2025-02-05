@@ -185,7 +185,8 @@ function SubmissionHandler({ data }: { data: SubmissionData }) {
         console.log(error);
       },
       onLogs: (logs) => {
-        if (logs[0]?.args?.index) {
+        console.log(logs);
+        if (logs[0].args.from === account.address) {
           setArticleId(logs[0].args.index);
         }
       },
