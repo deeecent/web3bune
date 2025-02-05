@@ -33,7 +33,6 @@ import {
   useAccount,
   useTransactionConfirmations,
   useWaitForTransactionReceipt,
-  useWatchContractEvent,
 } from "wagmi";
 import {
   useWriteWeb3buneCreatePost,
@@ -45,6 +44,7 @@ import { useUploader } from "./IPFS";
 import { parseEther } from "viem";
 import { useEnvChainId } from "./env";
 import { Link, useNavigate } from "react-router-dom";
+import { usePublicClient } from "wagmi";
 
 const STORAGE_KEY_TITLE = "TMP_TITLE";
 const STORAGE_KEY_PREVIEW = "TMP_PREVIEW";
@@ -97,7 +97,7 @@ function ArticlePriceInput({
             <Text>ETH</Text>
           </InputRightElement>
         </InputGroup>
-        <EthToUsdConverter ethValue={debouncedValue} />
+        <EthToUsdConverter ethValue={parseEther(debouncedValue.toString())} />
       </HStack>
     </VStack>
   );
@@ -168,22 +168,34 @@ function SubmissionHandler({ data }: { data: SubmissionData }) {
   const navigate = useNavigate();
 
   const [jsonData, setJsonData] = useState<string>();
-  const { pending, CID, error: metaError } = useUploader(jsonData);
+  const { pending, ipfsURL, error: metaError } = useUploader(jsonData);
   const [sentence, setSentence] = useState("");
   const [articleId, setArticleId] = useState<bigint>();
 
   const [progress, setProgress] = useState(0);
+  const publicClient = usePublicClient({ chainId: chainId });
 
-  useWatchContractEvent({
-    address: web3buneAddress[chainId],
-    abi: web3buneAbi,
-    eventName: "PostCreated",
-    chainId: chainId,
-    args: { from: account.address },
-    onLogs: (logs) => {
-      setArticleId(logs[0].args.index);
-    },
-  });
+  // Set up the event listener
+  useEffect(() => {
+    const unwatch = publicClient.watchContractEvent({
+      address: web3buneAddress[chainId],
+      abi: web3buneAbi,
+      eventName: "PostCreated",
+      onError: (error) => {
+        console.log(error);
+      },
+      onLogs: (logs) => {
+        if (logs[0]?.args?.index) {
+          setArticleId(logs[0].args.index);
+        }
+      },
+    });
+
+    // Cleanup
+    return () => {
+      unwatch();
+    };
+  }, [chainId, publicClient]);
 
   const {
     data: hash,
@@ -270,28 +282,45 @@ function SubmissionHandler({ data }: { data: SubmissionData }) {
   }
 
   useEffect(() => {
-    console.log(confirmationsData);
-    if (Number(confirmationsData) === TOTAL_CONFIRMATIONS) {
-      navigate(`/read/${articleId}`);
-    } else if (Number(confirmationsData) > 0)
-      setProgress((100 / 4) * (1 + Number(confirmationsData)));
+    if (Number(confirmationsData) >= TOTAL_CONFIRMATIONS) {
+      return;
+    } else if (Number(confirmationsData) > 0) {
+      setSentence(`${3 - Number(confirmationsData)} confirmations left...`);
+      setProgress(
+        (40 + 60 / TOTAL_CONFIRMATIONS) *
+          Math.min(Number(confirmationsData), TOTAL_CONFIRMATIONS)
+      );
+    }
   }, [confirmationsData]);
 
   useEffect(() => {
-    if (CID !== undefined) {
-      setProgress(25);
-      setSentence("Waiting for transaction confirmation...");
+    if (articleId !== undefined) {
+      navigate(`/read/${articleId}`);
+    }
+  }, [articleId]);
+
+  useEffect(() => {
+    if (hash !== undefined) {
+      setProgress(progress + 15);
+      setSentence(`${TOTAL_CONFIRMATIONS} confirmations left...`);
+    }
+  }, [hash]);
+
+  useEffect(() => {
+    if (ipfsURL !== undefined) {
+      setProgress(progress + 25);
+      setSentence("Waiting for wallet confirmation...");
       writeContract({
         chainId,
         args: [
-          CID,
+          ipfsURL,
           parseEther(String(data.price)),
           BigInt(data.distributorReward * 100),
           BigInt(data.networkTip * 100),
         ],
       });
     }
-  }, [CID]);
+  }, [ipfsURL]);
 
   useEffect(() => {
     if (submitError) {
@@ -624,7 +653,7 @@ function Write() {
               </Text>
               <Spacer />
               <Text fontFamily="monospace" alignSelf="flex-end">
-                0.01 ETH
+                {price}
               </Text>
             </Flex>
             <Spacer />

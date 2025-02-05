@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Box, Text } from "@chakra-ui/react";
+import { formatEther } from "viem";
 
-export const EthToUsdConverter = ({ ethValue }: { ethValue: number }) => {
+export const EthToUsdConverter = ({ ethValue }: { ethValue: bigint }) => {
   const [usdPrice, setUsdPrice] = useState<number>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
@@ -16,7 +17,7 @@ export const EthToUsdConverter = ({ ethValue }: { ethValue: number }) => {
           "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD"
         );
         const ethToUsd = response.data.USD;
-        setUsdPrice(ethValue * ethToUsd);
+        setUsdPrice(parseFloat(formatEther(ethValue)) * ethToUsd);
       } catch (err) {
         setError("Failed to fetch Ethereum price.");
       } finally {

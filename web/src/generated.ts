@@ -1865,6 +1865,8 @@ export const web3buneAbi = [
             internalType: 'uint256',
             type: 'uint256',
           },
+          { name: 'createdAt', internalType: 'uint256', type: 'uint256' },
+          { name: 'updatedAt', internalType: 'uint256', type: 'uint256' },
         ],
       },
     ],
@@ -1910,6 +1912,8 @@ export const web3buneAbi = [
       { name: 'price', internalType: 'uint256', type: 'uint256' },
       { name: 'feeBasisPoints', internalType: 'uint256', type: 'uint256' },
       { name: 'aggFeeBasisPoints', internalType: 'uint256', type: 'uint256' },
+      { name: 'createdAt', internalType: 'uint256', type: 'uint256' },
+      { name: 'updatedAt', internalType: 'uint256', type: 'uint256' },
     ],
     stateMutability: 'view',
   },
@@ -2023,7 +2027,7 @@ export const web3buneAbi = [
  */
 export const web3buneAddress = {
   10: '0x5eaB3204421a959EbA9aecCE69F51A1F5d6c2B8c',
-  1337: '0x3B99cDC122f0ce816b2Ba1A1d035D3490e9126cA',
+  1337: '0x8a22225eD7eD460D7ee3842bce2402B9deaD23D3',
   11155111: '0xf614E8Cc3e5b8b17d370E21011a82641B2a953f6',
 } as const
 

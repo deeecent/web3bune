@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { create } from "ipfs-http-client";
-import { INFURA_API_KEY, INFURA_API_SECRET } from "./env";
+import { INFURA_API_KEY, INFURA_API_SECRET, INFURA_GATEWAY } from "./env";
 
 const client = create({
   url: "https://ipfs.infura.io:5001",
@@ -10,7 +10,7 @@ const client = create({
 });
 
 export function useUploader(data: string | undefined) {
-  const [CID, setCID] = useState<string>();
+  const [ipfsURL, setIpfsURL] = useState<string>();
   const [error, setError] = useState<string>();
   const [pending, setPending] = useState(false);
 
@@ -18,7 +18,7 @@ export function useUploader(data: string | undefined) {
     try {
       setPending(true);
       const contentData = await client.add(data);
-      setCID(contentData.cid.toString());
+      setIpfsURL(`${INFURA_GATEWAY}/${contentData.cid.toString()}`);
       setPending(false);
     } catch (error) {
       setPending(false);
@@ -28,12 +28,12 @@ export function useUploader(data: string | undefined) {
 
   useEffect(() => {
     if (data) {
-      setCID(undefined);
+      setIpfsURL(undefined);
       setError(undefined);
       setPending(false);
       uploadToIPFS(data);
     }
   }, [data]);
 
-  return { pending, CID, error };
+  return { pending, ipfsURL, error };
 }

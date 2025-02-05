@@ -5,38 +5,43 @@ import {
   Flex,
   Heading,
   HStack,
-  Input,
   SimpleGrid,
-  Spacer,
   Text,
   VStack,
 } from "@chakra-ui/react";
-import { GlitchButton, Header, Windows98ButtonGroup } from "./CustomComponents";
+import { GlitchButton, Header } from "./CustomComponents";
 import Markdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import "./markdown.css";
 import ChaoticImageDisplay from "./Ads";
 import { useParams } from "react-router-dom";
+import { useReadWeb3bunePosts } from "./generated";
+import syncFetch from "sync-fetch";
+import { formatEther, parseEther } from "viem";
+import { strongCipher } from "./utils/cipher";
+import { EthToUsdConverter } from "./EthConverter";
 
 const STORAGE_KEY_TITLE = "TMP_TITLE";
 const STORAGE_KEY_PREVIEW = "TMP_PREVIEW";
 const STORAGE_KEY_PAID = "TMP_PAID";
 const FONT = `"Courier New", "monospace"`;
 
+function shorten(wallet: string) {
+  return `${wallet.slice(0, 5)}..${wallet.slice(-3)}`;
+}
+
 function MintSection({
   author,
   price,
   distributorReward,
   networkTip,
-  gasFee,
   onClickMint,
   onClickNo,
 }: {
   author: string;
-  price: string;
-  distributorReward: string;
-  networkTip: string;
-  gasFee: string;
+  price: bigint;
+  distributorReward: bigint;
+  networkTip: bigint;
   onClickMint: () => any;
   onClickNo: () => any;
 }) {
@@ -61,23 +66,27 @@ function MintSection({
             <GlitchButton
               isLoading={false}
               onClick={onClickMint}
-              label={`Mint - ${price} ETH`}
+              label={`Mint - ${formatEther(price)} ETH`}
             />
             <HStack textAlign="center" justifyContent="center" gap="20px">
               <VStack alignItems="center">
-                <Text>$0.178</Text>
+                <EthToUsdConverter ethValue={price} />
                 <Text>↓</Text>
-                <Text>@timdaub</Text>
+                <Text>{shorten(author)}</Text>
               </VStack>
               <VStack>
-                <Text>$0.02</Text>
+                <EthToUsdConverter
+                  ethValue={(price / BigInt(100)) * distributorReward}
+                />
                 <Text>↓</Text>
                 <Text>curator</Text>
               </VStack>
               <VStack>
-                <Text>$0.001</Text>
+                <EthToUsdConverter
+                  ethValue={(price / BigInt(100)) * networkTip}
+                />
                 <Text>↓</Text>
-                <Text>network</Text>
+                <Text>web3bune</Text>
               </VStack>
             </HStack>
           </VStack>
@@ -94,7 +103,7 @@ function MintSection({
               <VStack>
                 <Text>nothing</Text>
                 <Text>↓</Text>
-                <Text>@timdaub</Text>
+                <Text>{shorten(author)}</Text>
               </VStack>
               <VStack>
                 <Text>nothing</Text>
@@ -120,40 +129,91 @@ function MintSection({
   );
 }
 
+interface Post {
+  tokenURI: string;
+  author: string;
+  price: bigint;
+  feeBasisPoints: bigint;
+  aggFeeBasisPoints: bigint;
+  createdAt: number;
+  updatedAt: number;
+}
+
+interface PostMetadata {
+  title: string;
+  description: string;
+  content: string;
+  author: string;
+}
+
 function Read() {
   const { articleId } = useParams<Record<"articleId", string>>();
 
-  const [preview, setPreview] = useState("");
-  const [paid, setPaid] = useState("");
+  const [freeContent, setFreeContent] = useState("");
+  const [paidContent, setPaidContent] = useState("");
   const [title, setTitle] = useState("");
   const [minted, setMinted] = useState(false);
 
-  const [author, setAuthor] = useState("@timdaub");
-  const [date, setDate] = useState(1736873000);
+  const [tokenURI, setTokenURI] = useState<string>();
+  const [author, setAuthor] = useState<string>();
+  const [createdAt, setCreatedAt] = useState<number>();
+  const [updatedAt, setUpdatedAt] = useState<number>();
 
-  const [price, setPrice] = useState("0.001");
-  const [reward, setReward] = useState("0.0002");
-  const [tip, setTip] = useState("0.0001");
-  const [gas, setGas] = useState("0.0000001");
+  const [price, setPrice] = useState<bigint>();
+  const [distributorReward, setDistributorReward] = useState<bigint>();
+  const [networkTip, setNetworkTip] = useState<bigint>();
 
   const [expectChaos, setExpectChaos] = useState(false);
 
+  const { data: post } = useReadWeb3bunePosts({
+    args: [BigInt(articleId !== undefined ? articleId : 0)],
+    query: { enabled: articleId !== undefined },
+  });
+
   useEffect(() => {
-    const savedPreview = localStorage.getItem(STORAGE_KEY_PREVIEW);
-    if (savedPreview) {
-      console.log(preview);
-      setPreview(savedPreview);
+    if (articleId === "test") {
+      setAuthor("@timdaub");
+      setPrice(parseEther("0.01"));
+      setDistributorReward(BigInt(10));
+      setNetworkTip(BigInt(1));
+      setCreatedAt(new Date().getTime() / 1000);
+      setUpdatedAt(new Date().getTime() / 1000);
+
+      const savedPreview = localStorage.getItem(STORAGE_KEY_PREVIEW);
+      if (savedPreview) {
+        setFreeContent(savedPreview);
+      }
+      const savedPaid = localStorage.getItem(STORAGE_KEY_PAID);
+      if (savedPaid) {
+        setPaidContent(savedPaid);
+      }
+      const savedTitle = localStorage.getItem(STORAGE_KEY_TITLE);
+      if (savedTitle) {
+        setTitle(savedTitle);
+      }
     }
-    const savedPaid = localStorage.getItem(STORAGE_KEY_PAID);
-    console.log(savedPaid);
-    if (savedPaid) {
-      setPaid(savedPaid);
+  }, [articleId]);
+
+  useEffect(() => {
+    if (post) {
+      setTokenURI(post[0]);
+      setAuthor(post[1]);
+      setPrice(post[2]);
+      setDistributorReward(post[3]);
+      setNetworkTip(post[4]);
+      setCreatedAt(Number(post[5]));
+      setUpdatedAt(Number(post[6]));
     }
-    const savedTitle = localStorage.getItem(STORAGE_KEY_TITLE);
-    if (savedTitle) {
-      setTitle(savedTitle);
+  }, [post]);
+
+  useEffect(() => {
+    if (tokenURI) {
+      const metadata = syncFetch(tokenURI).json() as PostMetadata;
+      setPaidContent(metadata.content);
+      setFreeContent(metadata.description);
+      setTitle(metadata.title);
     }
-  }, []);
+  }, [tokenURI]);
 
   return (
     <Flex
@@ -187,18 +247,19 @@ function Read() {
         <Heading size="3xl">{title}</Heading>
         <Text variant="title" marginBottom="50px">
           {author} -{" "}
-          {new Date(date * 1000).toLocaleDateString("en-US", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          })}
+          {createdAt !== undefined &&
+            new Date(createdAt * 1000).toLocaleDateString("en-US", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}
         </Text>
         <div className="markdown">
           <Markdown
             urlTransform={(value: string) => value}
             rehypePlugins={[rehypeRaw]}
           >
-            {preview}
+            {freeContent}
           </Markdown>
         </div>
         {minted && (
@@ -207,25 +268,28 @@ function Read() {
               urlTransform={(value: string) => value}
               rehypePlugins={[rehypeRaw]}
             >
-              {paid}
+              {strongCipher(paidContent, -42)}
             </Markdown>
           </div>
         )}
         <ChaoticImageDisplay activate={expectChaos} />
-        {!minted && (
-          <MintSection
-            onClickMint={() => setMinted(true)}
-            onClickNo={() => {
-              setMinted(true);
-              setExpectChaos(true);
-            }}
-            price={price}
-            distributorReward={reward}
-            networkTip={tip}
-            gasFee={gas}
-            author={author}
-          />
-        )}
+        {!minted &&
+          price !== undefined &&
+          distributorReward !== undefined &&
+          networkTip !== undefined &&
+          author !== undefined && (
+            <MintSection
+              onClickMint={() => setMinted(true)}
+              onClickNo={() => {
+                setMinted(true);
+                setExpectChaos(true);
+              }}
+              price={price}
+              distributorReward={distributorReward}
+              networkTip={networkTip}
+              author={author}
+            />
+          )}
       </VStack>
     </Flex>
   );
