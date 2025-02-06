@@ -19,6 +19,7 @@ import Home from "./Home.tsx";
 import Write from "./Write.tsx";
 import Read from "./Read.tsx";
 import Manifesto from "./Manifesto.tsx";
+import About from "./About.tsx";
 
 const Button = defineStyleConfig({
   // The styles all button have in common
@@ -104,6 +105,10 @@ const router = createHashRouter([
   {
     path: "/manifesto",
     element: <Manifesto />,
+  },
+  {
+    path: "/about",
+    element: <About />,
   },
   {
     path: "/write",

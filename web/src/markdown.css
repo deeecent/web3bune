@@ -1,12 +1,20 @@
 .markdown h1 {
-  font-family: "Courier New", Courier, monospace;
   font-size: 2.5em;
   font-weight: bold;
 }
 
 .markdown h2 {
-  font-family: "Courier New", Courier, monospace;
   font-size: 2.1em;
+  font-weight: bold;
+}
+
+.markdown h3 {
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+.markdown h4 {
+  font-size: 1.2em;
   font-weight: bold;
 }
 
