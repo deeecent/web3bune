@@ -168,7 +168,7 @@ function SubmissionHandler({ data }: { data: SubmissionData }) {
   const navigate = useNavigate();
 
   const [jsonData, setJsonData] = useState<string>();
-  const { pending, ipfsURL, error: metaError } = useUploader(jsonData);
+  const { ipfsURL } = useUploader(jsonData);
   const [sentence, setSentence] = useState("");
   const [articleId, setArticleId] = useState<bigint>();
 

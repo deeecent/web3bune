@@ -1,5 +1,4 @@
-import "react-quill/dist/quill.snow.css";
-import { Flex, Heading, HStack, Spacer, Text, VStack } from "@chakra-ui/react";
+import { Heading, HStack, Spacer, Text, VStack } from "@chakra-ui/react";
 import { Header } from "./CustomComponents";
 import Markdown from "react-markdown";
 import rehypeRaw from "rehype-raw";

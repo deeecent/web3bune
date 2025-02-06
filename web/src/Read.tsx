@@ -23,7 +23,6 @@ import { EthToUsdConverter } from "./EthConverter";
 const STORAGE_KEY_TITLE = "TMP_TITLE";
 const STORAGE_KEY_PREVIEW = "TMP_PREVIEW";
 const STORAGE_KEY_PAID = "TMP_PAID";
-const FONT = `"Courier New", "monospace"`;
 
 function shorten(wallet: string) {
   return `${wallet.slice(0, 5)}..${wallet.slice(-3)}`;
@@ -126,16 +125,6 @@ function MintSection({
       </VStack>
     </Box>
   );
-}
-
-interface Post {
-  tokenURI: string;
-  author: string;
-  price: bigint;
-  feeBasisPoints: bigint;
-  aggFeeBasisPoints: bigint;
-  createdAt: number;
-  updatedAt: number;
 }
 
 interface PostMetadata {
@@ -251,7 +240,17 @@ function Read() {
               day: "numeric",
               month: "long",
               year: "numeric",
-            })}
+            })}{" "}
+          {updatedAt !== createdAt &&
+            updatedAt !== undefined &&
+            `(updated at ${new Date(updatedAt * 1000).toLocaleDateString(
+              "en-US",
+              {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              }
+            )})`}
         </Text>
         <div className="markdown">
           <Markdown
