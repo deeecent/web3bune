@@ -104,7 +104,13 @@ function CallToActions() {
 
 function Home() {
   return (
-    <VStack minHeight="100vh" padding="20px" width="100%">
+    <VStack
+      width="70%"
+      maxWidth="1000px"
+      margin="0 auto"
+      minHeight="100vh"
+      padding="20px"
+    >
       <Header />
       <Title />
       <CallToActions />

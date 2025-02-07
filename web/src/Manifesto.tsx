@@ -32,12 +32,11 @@ This is it. **For now**.`;
     <VStack minHeight="100vh" padding="20px" width="100%">
       <Header />
       <VStack
-        marginTop="50px"
-        backgroundColor="white"
+        width="70%"
+        maxWidth="1000px"
+        margin="0 auto"
+        minHeight="100vh"
         padding="20px"
-        textAlign="left"
-        boxShadow="10px 10px 0px 0px black"
-        alignItems="left"
       >
         <Heading size="2xl">
           The News Industry Most Terrible Secret You Won't Believe it Click Here

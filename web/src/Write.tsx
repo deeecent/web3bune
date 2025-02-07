@@ -483,195 +483,197 @@ function Write() {
   }, []);
 
   return (
-    <Flex
-      direction="column"
-      overflow="auto"
-      width="100%"
-      minHeight="100vh"
-      alignItems="stretch"
-      textAlign="left"
-      padding="20px"
-      gap="20px"
-    >
-      {activeEditor && (
-        <Box style={styles.menuContainer}>
-          <FloatingMenu editor={activeEditor} />
-        </Box>
-      )}
-      <Header />
-      <Text
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        height="100px"
-        fontWeight="bold"
-        fontSize="1.5em"
+    <VStack width="70%" maxWidth="1000px" margin="0 auto">
+      <Flex
+        direction="column"
+        overflow="auto"
+        width="100%"
+        minHeight="100vh"
+        alignItems="stretch"
+        textAlign="left"
+        padding="20px"
+        gap="20px"
       >
-        WRITE GOOD CONTENT
-      </Text>
-      <Box
-        backgroundColor="white"
-        height="50px"
-        boxShadow="5px 5px 0px 0px black"
-      >
-        <Input
-          height="100%"
-          border="none"
-          borderRadius="0px"
-          placeholder="Article Title"
-          fontSize="2.2em"
-          value={title}
+        {activeEditor && (
+          <Box style={styles.menuContainer}>
+            <FloatingMenu editor={activeEditor} />
+          </Box>
+        )}
+        <Header />
+        <Text
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          height="100px"
           fontWeight="bold"
-          onChange={handleTitleChange}
-        ></Input>
-      </Box>
-      <Spacer />
-      <Box>
-        <Text variant="title">Free Preview</Text>
-        <Text>
-          A description, subtitle, paragraph... whatever works to make the
-          reader buy the rest.
-        </Text>
-      </Box>
-      <Box>
-        <TiptapEditor
-          onUpdate={handlePreviewChange}
-          onFocus={handleEditorFocus} // Capture editor focus
-          content={freeContent}
-        />
-      </Box>
-      <Spacer />
-      <Box>
-        <Text variant="title">Paid Content</Text>
-        <Text>
-          This will be shown to the reader only after purchasing the article.
-        </Text>
-      </Box>
-      <Box>
-        <TiptapEditor
-          onUpdate={handlePaidChange}
-          onFocus={handleEditorFocus} // Capture editor focus
-          content={paidContent}
-        />
-      </Box>
-      <SimpleGrid minChildWidth="300px" gap="20px">
-        <Box
-          backgroundColor="bune.lightGrey"
-          border="1px dashed black"
-          padding="20px"
-          boxShadow="5px 5px 0px 0px black"
-          sx={{
-            transition: "transform 0.2s",
-            "&:hover": {
-              transform: "translate(-2px, -2px)",
-            },
-          }}
+          fontSize="1.5em"
         >
-          <Heading textAlign="left" variant="title" fontSize="1.5em">
-            Revenue Configuration
-          </Heading>
-          <VStack alignItems="left" width="250px" minWidth="250px">
-            <ArticlePriceInput
-              defaultValue={DEFAULT_PRICE.toString()}
-              onChange={handlePriceChange}
-            />
-            <ConfigurationInput
-              labels={["5%", "10%", "15%"]}
-              defaultValue={(DEFAULT_DISTRIBUTOR_REWARD * 100).toString()}
-              title="Distributor Reward"
-              onChange={handleDistributorRewardChange}
-            />
-            <ConfigurationInput
-              labels={["1%", "2%", "5%"]}
-              defaultValue={(DEFAULT_NETWORK_TIP * 100).toString()}
-              title="Network Tip"
-              onChange={handleNetworkTipChange}
-            />
-          </VStack>
+          WRITE GOOD CONTENT
+        </Text>
+        <Box
+          backgroundColor="white"
+          height="50px"
+          boxShadow="5px 5px 0px 0px black"
+        >
+          <Input
+            height="100%"
+            border="none"
+            borderRadius="0px"
+            placeholder="Article Title"
+            fontSize="2.2em"
+            value={title}
+            fontWeight="bold"
+            onChange={handleTitleChange}
+          ></Input>
         </Box>
-        <Box
-          backgroundColor="bune.lightGrey"
-          border="1px dashed black"
-          padding="20px"
-          boxShadow="5px 5px 0px 0px black"
-          sx={{
-            transition: "transform 0.2s",
-            "&:hover": {
-              transform: "translate(-2px, -2px)",
-            },
-          }}
-        >
-          <VStack width="100%" alignItems="left" height="100%">
+        <Spacer />
+        <Box>
+          <Text variant="title">Free Preview</Text>
+          <Text>
+            A description, subtitle, paragraph... whatever works to make the
+            reader buy the rest.
+          </Text>
+        </Box>
+        <Box>
+          <TiptapEditor
+            onUpdate={handlePreviewChange}
+            onFocus={handleEditorFocus} // Capture editor focus
+            content={freeContent}
+          />
+        </Box>
+        <Spacer />
+        <Box>
+          <Text variant="title">Paid Content</Text>
+          <Text>
+            This will be shown to the reader only after purchasing the article.
+          </Text>
+        </Box>
+        <Box>
+          <TiptapEditor
+            onUpdate={handlePaidChange}
+            onFocus={handleEditorFocus} // Capture editor focus
+            content={paidContent}
+          />
+        </Box>
+        <SimpleGrid minChildWidth="300px" gap="20px">
+          <Box
+            backgroundColor="bune.lightGrey"
+            border="1px dashed black"
+            padding="20px"
+            boxShadow="5px 5px 0px 0px black"
+            sx={{
+              transition: "transform 0.2s",
+              "&:hover": {
+                transform: "translate(-2px, -2px)",
+              },
+            }}
+          >
             <Heading textAlign="left" variant="title" fontSize="1.5em">
-              Revenue Split
+              Revenue Configuration
             </Heading>
-            <Box
-              padding="10px"
-              marginTop="20px"
-              textAlign="left"
-              backgroundColor="white"
-              borderBottom="2px solid black"
-            >
-              <Flex direction="row">
-                <Text fontFamily="monospace" alignSelf="flex-start">
-                  Your Share
-                </Text>
-                <Spacer />
-                <Text fontFamily="monospace" alignSelf="flex-end">
-                  {(
-                    price -
-                    (price * distributorReward + price * networkTip)
-                  ).toFixed(8)}{" "}
-                  ETH
-                </Text>
-              </Flex>
-              <Flex direction="row">
-                <Text fontFamily="monospace" alignSelf="flex-start">
-                  Distributor Reward
-                </Text>
-                <Spacer />
-                <Text fontFamily="monospace" alignSelf="flex-end">
-                  {(price * distributorReward).toFixed(8)} ETH
-                </Text>
-              </Flex>
-              <Flex direction="row">
-                <Text fontFamily="monospace" alignSelf="flex-start">
-                  Network Tip
-                </Text>
-                <Spacer />
-                <Text fontFamily="monospace" alignSelf="flex-end">
-                  {(price * networkTip).toFixed(8)} ETH
-                </Text>
-              </Flex>
-            </Box>
-            <Flex direction="row" padding="10px">
-              <Text
-                fontWeight="bold"
-                fontFamily="monospace"
-                alignSelf="flex-start"
+            <VStack alignItems="left" width="250px" minWidth="250px">
+              <ArticlePriceInput
+                defaultValue={DEFAULT_PRICE.toString()}
+                onChange={handlePriceChange}
+              />
+              <ConfigurationInput
+                labels={["5%", "10%", "15%"]}
+                defaultValue={(DEFAULT_DISTRIBUTOR_REWARD * 100).toString()}
+                title="Distributor Reward"
+                onChange={handleDistributorRewardChange}
+              />
+              <ConfigurationInput
+                labels={["1%", "2%", "5%"]}
+                defaultValue={(DEFAULT_NETWORK_TIP * 100).toString()}
+                title="Network Tip"
+                onChange={handleNetworkTipChange}
+              />
+            </VStack>
+          </Box>
+          <Box
+            backgroundColor="bune.lightGrey"
+            border="1px dashed black"
+            padding="20px"
+            boxShadow="5px 5px 0px 0px black"
+            sx={{
+              transition: "transform 0.2s",
+              "&:hover": {
+                transform: "translate(-2px, -2px)",
+              },
+            }}
+          >
+            <VStack width="100%" alignItems="left" height="100%">
+              <Heading textAlign="left" variant="title" fontSize="1.5em">
+                Revenue Split
+              </Heading>
+              <Box
+                padding="10px"
+                marginTop="20px"
+                textAlign="left"
+                backgroundColor="white"
+                borderBottom="2px solid black"
               >
-                Total
-              </Text>
+                <Flex direction="row">
+                  <Text fontFamily="monospace" alignSelf="flex-start">
+                    Your Share
+                  </Text>
+                  <Spacer />
+                  <Text fontFamily="monospace" alignSelf="flex-end">
+                    {(
+                      price -
+                      (price * distributorReward + price * networkTip)
+                    ).toFixed(8)}{" "}
+                    ETH
+                  </Text>
+                </Flex>
+                <Flex direction="row">
+                  <Text fontFamily="monospace" alignSelf="flex-start">
+                    Distributor Reward
+                  </Text>
+                  <Spacer />
+                  <Text fontFamily="monospace" alignSelf="flex-end">
+                    {(price * distributorReward).toFixed(8)} ETH
+                  </Text>
+                </Flex>
+                <Flex direction="row">
+                  <Text fontFamily="monospace" alignSelf="flex-start">
+                    Network Tip
+                  </Text>
+                  <Spacer />
+                  <Text fontFamily="monospace" alignSelf="flex-end">
+                    {(price * networkTip).toFixed(8)} ETH
+                  </Text>
+                </Flex>
+              </Box>
+              <Flex direction="row" padding="10px">
+                <Text
+                  fontWeight="bold"
+                  fontFamily="monospace"
+                  alignSelf="flex-start"
+                >
+                  Total
+                </Text>
+                <Spacer />
+                <Text fontFamily="monospace" alignSelf="flex-end">
+                  {price}
+                </Text>
+              </Flex>
               <Spacer />
-              <Text fontFamily="monospace" alignSelf="flex-end">
-                {price}
-              </Text>
-            </Flex>
-            <Spacer />
-            <SubmissionHandler
-              data={{
-                title,
-                paidContent,
-                freeContent,
-                distributorReward,
-                networkTip,
-                price,
-              }}
-            />
-          </VStack>
-        </Box>
-      </SimpleGrid>
-    </Flex>
+              <SubmissionHandler
+                data={{
+                  title,
+                  paidContent,
+                  freeContent,
+                  distributorReward,
+                  networkTip,
+                  price,
+                }}
+              />
+            </VStack>
+          </Box>
+        </SimpleGrid>
+      </Flex>
+    </VStack>
   );
 }
 

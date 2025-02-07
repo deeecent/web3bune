@@ -82,7 +82,6 @@ const theme = extendTheme({
       body: {
         background: "bune.lightGrey",
         color: "bune.darkGrey",
-        textAlign: "center",
         minHeight: "100vh",
       },
     },
@@ -126,9 +125,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <QueryClientProvider client={queryClient}>
         <ChakraProvider theme={theme}>
           <ConnectKitProvider>
-            <VStack width="70%" maxWidth="1000px" margin="0 auto">
-              <RouterProvider router={router} />
-            </VStack>
+            <RouterProvider router={router} />
           </ConnectKitProvider>
         </ChakraProvider>
       </QueryClientProvider>
